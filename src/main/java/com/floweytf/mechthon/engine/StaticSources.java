@@ -21,12 +21,11 @@ public class StaticSources {
     public static final String BOOTSTRAP = read("/mechthon/bootstrap.py");
 
     public static final List<Binding> BINDINGS = List.of(
+        new Binding("_internal", read("/mechthon/mechs/_internal.py"), true),
         new Binding("mechs", read("/mechthon/mechs/__init__.py"), true),
         new Binding("mechs.types", read("/mechthon/mechs/types.py"), true),
+        new Binding("mechs.scheduler", read("/mechthon/mechs/scheduler.py"), true),
         new Binding("mechs.entity", read("/mechthon/mechs/entity.py"), true),
         new Binding("mechs.attachment", read("/mechthon/mechs/attachment.py"), true)
     );
-
-    public static final String IMPL_ENTITY = read("/mechthon/impl/impl_entity.py");
-    public static final String IMPL_MESSAGE = read("/mechthon/impl/impl_message.py");
 }

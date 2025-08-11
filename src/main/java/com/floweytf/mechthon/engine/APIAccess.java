@@ -1,5 +1,6 @@
 package com.floweytf.mechthon.engine;
 
+import com.floweytf.mechthon.MechthonPlugin;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
@@ -8,7 +9,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.graalvm.polyglot.Value;
 
-public record APIAccess(ScriptEngine engine, Bindings bindings) {
+public record APIAccess(MechthonPlugin plugin, ScriptEngine engine, Bindings bindings) {
     private static final MiniMessage MINI_MESSAGE = MiniMessage.builder().tags(TagResolver.standard()).build();
 
     public int entityGetScore(Entity entity, String name) {
@@ -45,10 +46,6 @@ public record APIAccess(ScriptEngine engine, Bindings bindings) {
 
     public Value componentFromMini(String mini) {
         return bindings.createComponent(MINI_MESSAGE.deserialize(mini));
-    }
-
-    public Value componentFromString(String msg) {
-        return bindings.createComponent(Component.text(msg));
     }
 
     public String componentToRaw(Component component) {

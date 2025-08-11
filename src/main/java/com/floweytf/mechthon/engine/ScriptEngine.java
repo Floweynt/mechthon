@@ -1,5 +1,6 @@
 package com.floweytf.mechthon.engine;
 
+import com.floweytf.mechthon.MechthonPlugin;
 import com.floweytf.mechthon.util.Util;
 import com.google.common.base.Preconditions;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -24,7 +25,7 @@ public class ScriptEngine implements AutoCloseable {
     private final Bindings bindings;
     private final Map<String, ScriptInstance> scripts = new Object2ObjectOpenHashMap<>();
 
-    public ScriptEngine(Path root, LoadHandler events) {
+    public ScriptEngine(MechthonPlugin plugin, Path root, LoadHandler events) {
         this.context = Context.newBuilder("python")
             .allowAllAccess(false)
             .allowHostAccess(HostAccess.ALL)
@@ -38,10 +39,10 @@ public class ScriptEngine implements AutoCloseable {
                 "mechs", binding.name(), binding.source(), binding.isPackage()
             ));
 
-            return new Bindings(bootstrap);
+            return new Bindings(context);
         }, events::perfBindings);
 
-        context.getBindings("python").putMember("__api", new APIAccess(this, bindings));
+        context.getBindings("python").putMember("__api", new APIAccess(plugin, this, bindings));
 
         try {
             Files.createDirectories(root);

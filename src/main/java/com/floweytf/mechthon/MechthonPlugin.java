@@ -1,11 +1,10 @@
-package com.floweytf.mechthon.util;
+package com.floweytf.mechthon;
 
-import com.floweytf.mechthon.Commands;
-import com.floweytf.mechthon.ReloadableResource;
 import com.floweytf.mechthon.engine.LoadHandler;
 import com.floweytf.mechthon.engine.ScriptEngine;
+import com.floweytf.mechthon.util.ReloadableResource;
+import com.floweytf.mechthon.util.Util;
 import com.google.common.base.Preconditions;
-import javax.naming.Name;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -65,6 +64,7 @@ public class MechthonPlugin extends JavaPlugin {
 
     public boolean reloadEngine(LoadHandler handler, Runnable onComplete) {
         return engine.reload(() -> new ScriptEngine(
+            this,
             getDataFolder().toPath().resolve("scripts"),
             handler
         ), onComplete);

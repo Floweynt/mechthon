@@ -1,18 +1,16 @@
-from abc import abstractmethod
-from typing import NamedTuple, Protocol
-from _mechthon_internal import get_api # type: ignore
+from typing import Any, NamedTuple, NoReturn, cast
+from _mechthon_builtin import get_api
 
-class Message(Protocol):
-    @abstractmethod
-    def raw(self) -> str: ...
+class Message:
+    def __init__(self, delegate: NoReturn):
+        self._delegate = cast(Any, delegate)
+
+    def raw(self):
+        return get_api().componentToRaw(self._delegate)
 
     @staticmethod
     def parse_mini(msg: str) -> 'Message':
         return get_api().componentFromMini(msg)
-
-    @staticmethod
-    def from_string(msg: str) -> 'Message':
-        return get_api().componentFromString(msg)
 
 class Pos(NamedTuple):
     x: float

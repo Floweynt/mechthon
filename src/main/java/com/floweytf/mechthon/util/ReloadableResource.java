@@ -1,6 +1,5 @@
-package com.floweytf.mechthon;
+package com.floweytf.mechthon.util;
 
-import com.floweytf.mechthon.util.Util;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import java.util.Objects;

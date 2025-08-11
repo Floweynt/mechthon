@@ -1,7 +1,6 @@
 package com.floweytf.mechthon;
 
 import com.floweytf.mechthon.engine.LoadHandler;
-import com.floweytf.mechthon.util.MechthonPlugin;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.ArgumentSuggestions;
 import dev.jorel.commandapi.arguments.StringArgument;

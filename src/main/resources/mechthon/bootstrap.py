@@ -19,19 +19,6 @@ def load_script(script_instance, source_code: str):
         globals
     )
 
-def load_impl(name, source_code: str):
-    globals = {
-        "__name__": "__impl__",
-    }
-
-    exec(
-        compile(source_code, filename=f"@builtin:impl/{name}.py", mode="exec"),
-        globals,
-        globals
-    )
-
-    return globals
-
 def make_module_helper(package: str, name: str, is_package: bool):
     spec = importlib.util.spec_from_loader(name, loader=None, is_package=is_package)
     assert spec is not None
@@ -44,7 +31,7 @@ def define_python_module(package: str, name: str, source_code: str, is_package: 
     exec(compile(source_code, filename=f"@builtin:{name}.py", mode="exec"), make_module_helper(package, name, is_package))
 
 def bootstrap():
-    internal_mod = make_module_helper("_mechthon_internal", "_mechthon_internal", False)
+    internal_mod = make_module_helper("_mechthon_builtin", "_mechthon_builtin", False)
     internal_mod["current_script_instance"] = lambda: __current_script_instance
     internal_mod["get_api"] = lambda: __api
 

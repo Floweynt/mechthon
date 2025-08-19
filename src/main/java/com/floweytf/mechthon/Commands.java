@@ -1,12 +1,25 @@
 package com.floweytf.mechthon;
 
+import com.destroystokyo.paper.event.server.ServerTickStartEvent;
+import com.floweytf.mechthon.bindings.compiler.BindingCompiler;
+import com.floweytf.mechthon.bindings.impl.BindingsImpl;
+import com.floweytf.mechthon.bindings.truffle.objects.BindingInstanceTO;
 import com.floweytf.mechthon.engine.LoadHandler;
+import com.floweytf.mechthon.util.Util;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.ArgumentSuggestions;
 import dev.jorel.commandapi.arguments.StringArgument;
 import dev.jorel.commandapi.executors.ExecutorType;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Zombie;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.HostAccess;
 
 public class Commands {
     private static StringArgument scriptArg(MechthonPlugin plugin) {
@@ -83,5 +96,13 @@ public class Commands {
                 trigger(plugin)
             )
             .register(plugin);
+
+        new CommandAPICommand("stupid_test2")
+            .executesNative((sender, args) -> {
+                final var start = System.nanoTime();
+                Bukkit.dispatchCommand(sender.getCallee(), "function test:a");
+                final var end = System.nanoTime();
+                System.out.println(("meow: " + (end - start)));
+            }).register(plugin);
     }
 }

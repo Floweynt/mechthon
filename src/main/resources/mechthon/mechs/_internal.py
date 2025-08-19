@@ -1,4 +1,4 @@
-from typing import Any, Callable, Coroutine, TypeVar 
+from typing import Any, Callable, Coroutine, Protocol, TypeVar 
 
 class GenericAwaitable:
     def __init__(self, task: Callable[[Callable[[Any], None]], None]):

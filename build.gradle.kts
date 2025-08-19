@@ -21,14 +21,28 @@ repositories {
 }
 
 java {
-    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+        vendor = JvmVendorSpec.matching("GraalVM")
+    }
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
-    compileOnly("dev.jorel:commandapi-bukkit-core:9.4.1")
-    shadow(implementation("org.graalvm.polyglot:polyglot:23.1.2")!!)
-    shadow(implementation("org.graalvm.polyglot:python-community:23.1.2")!!)
+    compileOnly(libs.paper.api)
+    compileOnly(libs.commandapi.bukkit.core)
+
+    implementation(libs.graalvm.polyglot)
+    implementation(libs.graalvm.python.community)
+    implementation(libs.graalvm.truffle.api)
+
+    shadow(libs.graalvm.polyglot)
+    shadow(libs.graalvm.python.community)
+
+    annotationProcessor(libs.graalvm.truffle.dsl.processor)
+
+    testImplementation(libs.paper.api)
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 paper {
@@ -63,14 +77,15 @@ if (!sparkFile.exists()) {
 tasks {
     runServer {
         minecraftVersion("1.20.4")
-        jvmArgs = listOf(
-            "-XX:+UnlockExperimentalVMOptions",
-            "-XX:+EnableJVMCI",
-            "-javaagent:${sparkFile}=start,open"
-        )
+        jvmArgs = listOf("-XX:+UnlockDiagnosticVMOptions", "-XX:+DebugNonSafepoints", "-javaagent:${sparkFile}=start,open")
     }
 
     shadowJar {
         mergeServiceFiles()
+    }
+
+    test {
+        useJUnitPlatform()
+        jvmArgs("-XX:+UnlockExperimentalVMOptions", "-XX:+EnableJVMCI", "-XX:+UseJVMCICompiler")
     }
 }

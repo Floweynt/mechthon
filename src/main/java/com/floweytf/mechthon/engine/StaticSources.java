@@ -14,7 +14,7 @@ public class StaticSources {
         try (final var s = Objects.requireNonNull(StaticSources.class.getResource(name)).openStream()) {
             return new String(s.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            return Util.sneakyThrow(e);
+            throw Util.sneakyThrow(e);
         }
     }
 

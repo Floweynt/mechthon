@@ -1,10 +1,11 @@
-from typing import Any, Callable, MutableMapping, NoReturn, cast
+from abc import ABC
+from typing import Any, Callable, NoReturn, cast, overload
 from mechs.scheduler import Scheduler
 from mechs.types import Message, Pos, PosLike
 from _mechthon_builtin import get_api 
 
 class EntityScores:
-    def __init__(self, delegate: NoReturn):
+    def __init__(self, delegate):
         self._delegate = delegate
 
     def __getitem__(self, name: str) -> int:
@@ -31,10 +32,11 @@ class _EntityScheduler(Scheduler):
         )
 
 class Entity:
-    def __init__(self, delegate: NoReturn):
+    def __init__(self, delegate):
         self._delegate = cast(Any, delegate)
         self._scores = EntityScores(delegate)
         self._scheduler = _EntityScheduler(delegate)
+        self._is_living = "kill" in delegate 
 
     @property
     def scores(self) -> EntityScores: return self._scores
@@ -74,4 +76,14 @@ class Entity:
         if isinstance(msg, str):
             msg = Message.parse_mini(msg)
         return self._delegate.sendMessage(msg._delegate) # type: ignore
+
+    def kill(self):
+        if not self._is_living:
+            raise TypeError("not a living entity")
+        self._delegate.kill()
+
+class Player(Entity):
+    def __init__(self, delegate: NoReturn):
+        super.__init__(delegate)
+
 

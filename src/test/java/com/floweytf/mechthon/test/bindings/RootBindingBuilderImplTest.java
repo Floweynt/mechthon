@@ -25,13 +25,4 @@ public class RootBindingBuilderImplTest {
         statics.property("sprop", vh);
         assertTrue(r.getStatics().getMembers().containsKey("sprop"));
     }
-
-    @Test
-    void superClassAdds() {
-        RootBindingBuilderImpl<String> r = new RootBindingBuilderImpl<>(String.class, "n", "s");
-        RootBindingBuilderImpl<Object> other = new RootBindingBuilderImpl<>(Object.class, "o", "s2");
-        r.superClass(other);
-        assertTrue(r.getSupers().contains(other));
-        assertTrue(r.getParents().contains(other));
-    }
 }

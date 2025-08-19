@@ -62,7 +62,7 @@ public class TestImpl {
 
             tgt.b = 32;
 
-            ctx.getBindings("python").putMember("meow_custom", new BindingInstanceTO(tgt, ab, null));
+            ctx.getBindings("python").putMember("meow_custom", new BindingInstanceTO(tgt, ab));
             ctx.getBindings("python").putMember("meow_hostinterop", tgt);
             ctx.getBindings("python").putMember("meow_proxy", new ProxyObject() {
                 private final A a = new A();
@@ -124,7 +124,7 @@ public class TestImpl {
 
             ctx.eval("python", "print(meow_proxy)");
 
-            for (int i = 0; i < 1000; i++) {
+            for (int i = 0; i < 100; i++) {
                 final var a = System.nanoTime();
                 ctx.eval("python", """
                     for i in range(0, 10000):

@@ -13,6 +13,7 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.IntSupplier;
@@ -84,7 +85,7 @@ class BindingBuilderCompiler {
                 final int arity = original.type().parameterCount() - 1;
                 final var adapted = original.asSpreader(Object[].class, arity).asType(MethodType.methodType(Object.class, Object.class, Object[].class));
                 final int assignedLocalSlot = nextSlot.getAsInt();
-                members.put(name, new FunctionMember(adapted, arity, assignedLocalSlot));
+                members.put(name, new FunctionMember(adapted, Arrays.copyOfRange(original.type().parameterArray(), 1, arity + 1), arity, assignedLocalSlot));
             } else if (bm instanceof BindingMember.MHProperty mhp) {
                 verifyType(mhp.getter());
                 if (mhp.setter() != null) {

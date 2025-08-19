@@ -71,8 +71,8 @@ public class MechthonPlugin extends JavaPlugin {
 
             {
                 class Foo {
-                    public static int tell(Entity e, int msg) {
-                        e.sendMessage("Flowey is a cis man " + msg);
+                    public static int tell(Entity e, String msg) {
+                        e.sendMessage(msg);
                         return 0;
                     }
                 }
@@ -81,7 +81,7 @@ public class MechthonPlugin extends JavaPlugin {
                 final var aBindings = bindings.defineClassBinding(Entity.class, "meow", "A");
                 try {
                     aBindings.function("tell", MethodHandles.lookup().findStatic(Foo.class, "tell",
-                        MethodType.methodType(int.class, Entity.class, int.class)));
+                        MethodType.methodType(int.class, Entity.class, String.class)));
                 } catch (Exception e) {
                     throw Util.sneakyThrow(e);
                 }
@@ -91,7 +91,7 @@ public class MechthonPlugin extends JavaPlugin {
                 context.eval("python", """
                     def main():
                         for i in range(0, 100000):
-                            player.tell(33)
+                            player.tell("Flowey is a cis man")
                     """);
 
                 v = context.getBindings("python").getMember("main");
@@ -108,7 +108,7 @@ public class MechthonPlugin extends JavaPlugin {
                 }
 
                 {
-                    context.getBindings("python").putMember("player", new BindingInstanceTO(zombie.orElseThrow(), cb, null));
+                    context.getBindings("python").putMember("player", new BindingInstanceTO(zombie.orElseThrow(), cb));
                     final var start = System.nanoTime();
                     v.executeVoid();
                     final var end = System.nanoTime();

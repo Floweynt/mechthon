@@ -1,18 +1,19 @@
 package com.floweytf.mechthon.bindings.compiled;
 
 import com.floweytf.mechthon.bindings.truffle.objects.BindingInstanceTO;
+import com.floweytf.mechthon.bindings.truffle.objects.ObjectArrayTO;
 import java.util.Map;
 import java.util.function.IntSupplier;
 
 public final class CompiledBinding extends CompiledMember {
     private final Map<String, CompiledMember> members;
-    private final String[] cachedMemberNames;
+    private final ObjectArrayTO cachedMemberNames;
     private final int maxCacheSlots;
 
     public CompiledBinding(Map<String, CompiledMember> members, int cacheSlot, int maxCacheSlots) {
-        super(cacheSlot);
+        super(false, false, -1, cacheSlot);
         this.members = members;
-        this.cachedMemberNames = members.keySet().toArray(String[]::new);
+        this.cachedMemberNames = new ObjectArrayTO(members.keySet().toArray(String[]::new));
         this.maxCacheSlots = maxCacheSlots;
     }
 
@@ -24,7 +25,7 @@ public final class CompiledBinding extends CompiledMember {
         return members.containsKey(name);
     }
 
-    public String[] getCachedMemberNames() {
+    public ObjectArrayTO getCachedMemberNames() {
         return cachedMemberNames;
     }
 
@@ -39,7 +40,7 @@ public final class CompiledBinding extends CompiledMember {
 
     @Override
     public Object read(Object receiver) {
-        return new BindingInstanceTO(receiver, this, null);
+        return new BindingInstanceTO(receiver, this);
     }
 
     public Map<String, CompiledMember> getMembers() {

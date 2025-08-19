@@ -2,23 +2,16 @@ package com.floweytf.mechthon.bindings.compiled;
 
 import com.floweytf.mechthon.util.Util;
 import java.lang.invoke.MethodHandle;
-import org.graalvm.polyglot.Value;
 import org.jetbrains.annotations.Nullable;
 
 public final class PropertyMember extends CompiledMember {
     private final MethodHandle getter;
     private final @Nullable MethodHandle setter;
-    private final @Nullable Class<?> type;
 
     public PropertyMember(MethodHandle getter, @Nullable MethodHandle setter) {
-        super(-1);
+        super(setter != null, false, -1, -1);
         this.getter = getter;
         this.setter = setter;
-        if (setter != null) {
-            type = setter.type().lastParameterType();
-        } else {
-            type = null;
-        }
     }
 
     @Override
@@ -30,16 +23,11 @@ public final class PropertyMember extends CompiledMember {
         }
     }
 
-    public void write(Object receiver, Value value) {
-        if (setter == null) {
-            super.write(receiver, value);
-            return;
-        }
-
-        assert type != null;
-
+    @Override
+    public void write(Object receiver, Object value) {
+        assert setter != null;
         try {
-            setter.invokeExact(receiver, value.as(type));
+            setter.invokeExact(receiver, value);
         } catch (Throwable e) {
             Util.sneakyThrow(e);
         }

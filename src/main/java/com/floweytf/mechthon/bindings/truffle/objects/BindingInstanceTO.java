@@ -2,6 +2,8 @@ package com.floweytf.mechthon.bindings.truffle.objects;
 
 import com.floweytf.mechthon.bindings.compiled.CompiledBinding;
 import com.floweytf.mechthon.bindings.compiled.CompiledMember;
+import com.floweytf.mechthon.bindings.compiled.FunctionMember;
+import com.floweytf.mechthon.bindings.truffle.nodes.InvokeNode;
 import com.floweytf.mechthon.bindings.truffle.nodes.LookupNode;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
@@ -10,25 +12,22 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
-import org.apache.commons.lang3.NotImplementedException;
-import org.jetbrains.annotations.Nullable;
 
 @ExportLibrary(InteropLibrary.class)
 public final class BindingInstanceTO implements TruffleObject {
     private final Object target;
     private final CompiledBinding compiled;
     private final Object[] cache;
-    private final @Nullable BindingInstanceTO metaObject;
 
-    public BindingInstanceTO(Object target, CompiledBinding compiled, @Nullable BindingInstanceTO metaObject) {
+    public BindingInstanceTO(Object target, CompiledBinding compiled) {
         this.target = target;
         this.compiled = compiled;
         this.cache = new Object[compiled.getMaxCacheSlots()];
-        this.metaObject = metaObject;
     }
 
     public CompiledBinding getCompiled() {
@@ -150,8 +149,9 @@ public final class BindingInstanceTO implements TruffleObject {
         Object[] args,
         @Bind("$node") Node node,
         @Cached.Shared("lookupNode") @Cached LookupNode lookupNode,
+        @Cached InvokeNode invokeNode,
         @Cached.Shared("error") @Cached InlinedBranchProfile error
-    ) throws UnknownIdentifierException, UnsupportedMessageException, ArityException {
+    ) throws UnknownIdentifierException, UnsupportedMessageException, ArityException, UnsupportedTypeException {
         if (isNull()) {
             error.enter(node);
             throw UnsupportedMessageException.create();
@@ -169,92 +169,6 @@ public final class BindingInstanceTO implements TruffleObject {
             throw ArityException.create(cm.getArity(), cm.getArity(), args.length);
         }
 
-        return cm.invoke(target, args);
-    }
-
-    @ExportMessage
-    boolean isMetaObject() {
-        return !isNull() && false;
-    }
-
-    @ExportMessage
-    Object getMetaSimpleName(
-        @Bind("$node") Node node,
-        @Cached.Shared("error") @Cached InlinedBranchProfile error
-    ) throws UnsupportedMessageException {
-        if (!isMetaObject()) {
-            error.enter(node);
-            throw UnsupportedMessageException.create();
-        }
-        throw new NotImplementedException("TODO");
-        // return ((CompiledClassBinding) target).getSimpleName();
-    }
-
-    @ExportMessage
-    Object getMetaQualifiedName(
-        @Bind("$node") Node node,
-        @Cached.Shared("error") @Cached InlinedBranchProfile error
-    ) throws UnsupportedMessageException {
-        if (!isMetaObject()) {
-            error.enter(node);
-            throw UnsupportedMessageException.create();
-        }
-        throw new NotImplementedException("TODO");
-        //return ((CompiledClassBinding) target).getQualifiedName();
-    }
-
-    @ExportMessage
-    boolean hasMetaParents() {
-        if (!isMetaObject()) {
-            return false;
-        }
-
-        throw new NotImplementedException("TODO");
-    }
-
-    @ExportMessage
-    Object getMetaParents(
-        @Bind("$node") Node node,
-        @Cached.Shared("error") @Cached InlinedBranchProfile error
-    ) throws UnsupportedMessageException {
-        if (!isMetaObject()) {
-            error.enter(node);
-            throw UnsupportedMessageException.create();
-        }
-
-        throw new NotImplementedException("TODO");
-    }
-
-    @SuppressWarnings("SuspiciousMethodCalls")
-    @ExportMessage
-    boolean isMetaInstance(
-        Object instance,
-        @Bind("$node") Node node,
-        @Cached.Shared("error") @Cached InlinedBranchProfile error
-    ) throws UnsupportedMessageException {
-        if (!isMetaObject()) {
-            error.enter(node);
-            throw UnsupportedMessageException.create();
-        }
-
-        throw new NotImplementedException("TODO");
-    }
-
-    @ExportMessage
-    public boolean hasMetaObject() {
-        return !isNull() && metaObject != null;
-    }
-
-    @ExportMessage
-    public Object getMetaObject(
-        @Bind("$node") Node node,
-        @Cached.Shared("error") @Cached InlinedBranchProfile error
-    ) throws UnsupportedMessageException {
-        if (isNull() || metaObject == null) {
-            error.enter(node);
-            throw UnsupportedMessageException.create();
-        }
-
-        return metaObject;
+        return invokeNode.execute(node, (FunctionMember) cm, target, args);
     }
 }

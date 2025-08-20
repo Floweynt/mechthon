@@ -5,6 +5,9 @@ import com.floweytf.mechthon.api.bindings.annotations.BindingMethod;
 import com.floweytf.mechthon.api.bindings.annotations.BindingSetter;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -29,46 +32,50 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface BindingBuilder {
     /**
-     * Registers a property using a {@link VarHandle} with both read and write access.
+     * Registers a property using a {@link Field} with both read and write access.
      *
      * @param name  the name of the property in the scripting environment
-     * @param field the {@link VarHandle} for the property
+     * @param field the {@link Field} for the property
      */
-    void property(String name, VarHandle field);
+    default void property(String name, Field field) {
+        property(name, field, Modifier.isFinal(field.getModifiers()));
+    }
 
     /**
-     * Registers a property using a {@link VarHandle} with optional read-only access.
+     * Registers a property using a {@link Field} with optional read-only access.
      *
      * @param name       the name of the property in the scripting environment
-     * @param field      the {@link VarHandle} for the property
+     * @param field      the {@link Field} for the property
      * @param isReadOnly {@code true} to expose the property as read-only; {@code false} to allow writes
      */
-    void property(String name, VarHandle field, boolean isReadOnly);
+    void property(String name, Field field, boolean isReadOnly);
 
     /**
      * Registers a property using explicit getter and setter method handles.
      *
      * @param name   the name of the property in the scripting environment
-     * @param getter a {@link MethodHandle} to retrieve the property value
-     * @param setter a {@link MethodHandle} to set the property value, or {@code null} for read-only properties
+     * @param getter a {@link Method} to retrieve the property value
+     * @param setter a {@link Method} to set the property value, or {@code null} for read-only properties
      */
-    void property(String name, MethodHandle getter, @Nullable MethodHandle setter);
+    void property(String name, Method getter, @Nullable Method setter);
 
     /**
      * Registers a read-only property using a getter method handle.
      *
      * @param name   the name of the property in the scripting environment
-     * @param getter a {@link MethodHandle} to retrieve the property value
+     * @param getter a {@link Method} to retrieve the property value
      */
-    void property(String name, MethodHandle getter);
+    default void property(String name, Method getter) {
+        property(name, getter, null);
+    }
 
     /**
      * Registers a function in the scripting environment.
      *
-     * @param name the name of the function in the scripting environment
-     * @param mh   the {@link MethodHandle} for the function implementation
+     * @param name   the name of the function in the scripting environment
+     * @param method the {@link Method} for the function implementation
      */
-    void function(String name, MethodHandle mh);
+    void function(String name, Method method);
 
     /**
      * Parses and registers extension data from a class.

@@ -2,14 +2,15 @@ package com.floweytf.mechthon.bindings.impl;
 
 import com.floweytf.mechthon.api.bindings.builders.BindingBuilder;
 import com.floweytf.mechthon.api.bindings.builders.RootBindingBuilder;
+import java.util.function.Consumer;
 
-public final class RootBindingBuilderImpl<T> extends BaseInstanceBindingBuilderImpl<T> implements RootBindingBuilder<T> {
+public final class ImplRootBindingBuilder<T> extends ImplInstanceBindingBuilder<T> implements RootBindingBuilder<T> {
     private final Class<T> clazz;
     private final String name;
     private final String submodule;
-    private final BindingBuilderImpl statics = new StaticBindingBuilderImpl();
+    private final ImplStaticBindingBuilder statics = new ImplStaticBindingBuilder();
 
-    public RootBindingBuilderImpl(Class<T> clazz, String name, String submodule) {
+    public ImplRootBindingBuilder(Class<T> clazz, String name, String submodule) {
         super(clazz);
         this.clazz = clazz;
         this.name = name;
@@ -19,6 +20,12 @@ public final class RootBindingBuilderImpl<T> extends BaseInstanceBindingBuilderI
     @Override
     public BindingBuilder staticBindings() {
         return statics;
+    }
+
+    @Override
+    public void visitChildren(Consumer<BaseBindingBuilder> visitor) {
+        super.visitChildren(visitor);
+        visitor.accept(statics);
     }
 
     public Class<T> getClazz() {
@@ -33,7 +40,7 @@ public final class RootBindingBuilderImpl<T> extends BaseInstanceBindingBuilderI
         return submodule;
     }
 
-    public BindingBuilderImpl getStatics() {
+    public ImplStaticBindingBuilder getStatics() {
         return statics;
     }
 }

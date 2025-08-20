@@ -3,7 +3,7 @@ package com.floweytf.mechthon;
 import com.destroystokyo.paper.event.server.ServerTickStartEvent;
 import com.floweytf.mechthon.bindings.compiled.CompiledBinding;
 import com.floweytf.mechthon.bindings.compiler.BindingCompiler;
-import com.floweytf.mechthon.bindings.impl.BindingsImpl;
+import com.floweytf.mechthon.bindings.impl.ImplBindings;
 import com.floweytf.mechthon.bindings.truffle.objects.BindingInstanceTO;
 import com.floweytf.mechthon.engine.LoadHandler;
 import com.floweytf.mechthon.engine.ScriptEngine;
@@ -51,8 +51,6 @@ public class MechthonPlugin extends JavaPlugin {
 
         EntityVariables.scan();
 
-        System.out.println(System.getProperty("jdk.module.upgrade.path"));
-
         Commands.register(this);
     }
 
@@ -64,6 +62,7 @@ public class MechthonPlugin extends JavaPlugin {
             final Context context = Context.newBuilder("python")
                 .allowAllAccess(false)
                 .allowHostAccess(HostAccess.ALL)
+                .option("engine.TraceCompilation", "true")
                 .build();
 
             final Value v;
@@ -71,17 +70,17 @@ public class MechthonPlugin extends JavaPlugin {
 
             {
                 class Foo {
-                    public static int tell(Entity e, String msg) {
+                    public static int tell(Entity e, String msg, double value) {
                         e.sendMessage(msg);
                         return 0;
                     }
                 }
 
-                final var bindings = new BindingsImpl();
+                final var bindings = new ImplBindings();
                 final var aBindings = bindings.defineClassBinding(Entity.class, "meow", "A");
                 try {
                     aBindings.function("tell", MethodHandles.lookup().findStatic(Foo.class, "tell",
-                        MethodType.methodType(int.class, Entity.class, String.class)));
+                        MethodType.methodType(int.class, Entity.class, String.class, double.class)));
                 } catch (Exception e) {
                     throw Util.sneakyThrow(e);
                 }
@@ -91,7 +90,7 @@ public class MechthonPlugin extends JavaPlugin {
                 context.eval("python", """
                     def main():
                         for i in range(0, 100000):
-                            player.tell("Flowey is a cis man")
+                            player.tell("Flowey is a cis man", i)
                     """);
 
                 v = context.getBindings("python").getMember("main");
@@ -108,7 +107,7 @@ public class MechthonPlugin extends JavaPlugin {
                 }
 
                 {
-                    context.getBindings("python").putMember("player", new BindingInstanceTO(zombie.orElseThrow(), cb));
+                    context.getBindings("python").putMember("player", BindingInstanceTO.of(zombie.orElseThrow(), cb));
                     final var start = System.nanoTime();
                     v.executeVoid();
                     final var end = System.nanoTime();

@@ -9,7 +9,7 @@ public final class PropertyMember extends CompiledMember {
     private final @Nullable MethodHandle setter;
 
     public PropertyMember(MethodHandle getter, @Nullable MethodHandle setter) {
-        super(setter != null, false, -1, -1);
+        super(setter != null, false, false, -1);
         this.getter = getter;
         this.setter = setter;
     }

@@ -6,15 +6,15 @@ import java.util.Map;
 import java.util.function.IntSupplier;
 
 public final class CompiledBinding extends CompiledMember {
+    public static final CompiledBinding EMPTY = new CompiledBinding(Map.of());
+
     private final Map<String, CompiledMember> members;
     private final ObjectArrayTO cachedMemberNames;
-    private final int maxCacheSlots;
 
-    public CompiledBinding(Map<String, CompiledMember> members, int cacheSlot, int maxCacheSlots) {
-        super(false, false, -1, cacheSlot);
+    public CompiledBinding(Map<String, CompiledMember> members) {
+        super(false, false, true, -1);
         this.members = members;
         this.cachedMemberNames = new ObjectArrayTO(members.keySet().toArray(String[]::new));
-        this.maxCacheSlots = maxCacheSlots;
     }
 
     public CompiledMember getMember(String name) {
@@ -29,18 +29,9 @@ public final class CompiledBinding extends CompiledMember {
         return cachedMemberNames;
     }
 
-    public int getMaxCacheSlots() {
-        return maxCacheSlots;
-    }
-
-    @Override
-    public CompiledMember clone(IntSupplier cacheSlotGetter) {
-        return new CompiledBinding(members, cacheSlotGetter.getAsInt(), maxCacheSlots);
-    }
-
     @Override
     public Object read(Object receiver) {
-        return new BindingInstanceTO(receiver, this);
+        return BindingInstanceTO.ofNamespaceProxy(receiver, this);
     }
 
     public Map<String, CompiledMember> getMembers() {

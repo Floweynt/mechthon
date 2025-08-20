@@ -1,7 +1,7 @@
 package com.floweytf.mechthon.test.runtime;
 
 import com.floweytf.mechthon.bindings.compiler.BindingCompiler;
-import com.floweytf.mechthon.bindings.impl.BindingsImpl;
+import com.floweytf.mechthon.bindings.impl.ImplBindings;
 import com.floweytf.mechthon.bindings.truffle.objects.BindingInstanceTO;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import java.lang.invoke.MethodHandles;
@@ -37,8 +37,8 @@ public class TestImpl {
         return String.format("%.6g +/-%.6g", avgS, stderrS);
     }
 
-    public static void test() throws NoSuchFieldException, IllegalAccessException {
-        final var bindings = new BindingsImpl();
+    public static void benchmark() throws NoSuchFieldException, IllegalAccessException {
+        final var bindings = new ImplBindings();
         final var aBindings = bindings.defineClassBinding(A.class, "meow", "A");
         aBindings.property("b", MethodHandles.lookup().findVarHandle(A.class, "b", int.class));
         aBindings.property("c", MethodHandles.lookup().findVarHandle(A.class, "c", long.class));
@@ -62,7 +62,7 @@ public class TestImpl {
 
             tgt.b = 32;
 
-            ctx.getBindings("python").putMember("meow_custom", new BindingInstanceTO(tgt, ab));
+            ctx.getBindings("python").putMember("meow_custom", BindingInstanceTO.of(tgt, ab));
             ctx.getBindings("python").putMember("meow_hostinterop", tgt);
             ctx.getBindings("python").putMember("meow_proxy", new ProxyObject() {
                 private final A a = new A();

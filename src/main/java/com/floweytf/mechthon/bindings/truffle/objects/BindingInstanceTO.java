@@ -3,6 +3,7 @@ package com.floweytf.mechthon.bindings.truffle.objects;
 import com.floweytf.mechthon.bindings.compiled.CompiledBinding;
 import com.floweytf.mechthon.bindings.compiled.CompiledMember;
 import com.floweytf.mechthon.bindings.compiled.FunctionMember;
+import com.floweytf.mechthon.bindings.truffle.nodes.FieldGetNode;
 import com.floweytf.mechthon.bindings.truffle.nodes.InvokeNode;
 import com.floweytf.mechthon.bindings.truffle.nodes.LookupNode;
 import com.oracle.truffle.api.dsl.Bind;
@@ -19,24 +20,18 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.InlinedBranchProfile;
 
 @ExportLibrary(InteropLibrary.class)
-public final class BindingInstanceTO implements TruffleObject {
-    private final Object target;
-    private final CompiledBinding compiled;
-    private final Object[] cache;
-
-    public BindingInstanceTO(Object target, CompiledBinding compiled) {
-        this.target = target;
-        this.compiled = compiled;
-        this.cache = new Object[compiled.getMaxCacheSlots()];
+public record BindingInstanceTO(Object receiver, boolean canUnwrap, CompiledBinding bindings) implements TruffleObject {
+    public static BindingInstanceTO of(Object target, CompiledBinding bindings) {
+        return new BindingInstanceTO(target, true, bindings);
     }
 
-    public CompiledBinding getCompiled() {
-        return compiled;
+    public static BindingInstanceTO ofNamespaceProxy(Object target, CompiledBinding bindings) {
+        return new BindingInstanceTO(target, false, bindings);
     }
 
     @ExportMessage
     public boolean isNull() {
-        return target == null;
+        return receiver == null;
     }
 
     @ExportMessage
@@ -50,12 +45,12 @@ public final class BindingInstanceTO implements TruffleObject {
             throw UnsupportedMessageException.create();
         }
 
-        return compiled.getCachedMemberNames();
+        return bindings.getCachedMemberNames();
     }
 
     @ExportMessage
     public boolean isMemberReadable(String member) {
-        return !isNull() && compiled.hasMember(member);
+        return !isNull() && bindings.hasMember(member);
     }
 
     @ExportMessage
@@ -68,7 +63,7 @@ public final class BindingInstanceTO implements TruffleObject {
             return false;
         }
 
-        CompiledMember cm = lookupNode.execute(node, compiled, member);
+        CompiledMember cm = lookupNode.execute(node, bindings, member);
         return cm != null && cm.isWriteable();
     }
 
@@ -81,7 +76,7 @@ public final class BindingInstanceTO implements TruffleObject {
             return false;
         }
 
-        CompiledMember cm = lookupNode.execute(node, compiled, member);
+        CompiledMember cm = lookupNode.execute(node, bindings, member);
         return cm != null && cm.isExecutable();
     }
 
@@ -95,6 +90,7 @@ public final class BindingInstanceTO implements TruffleObject {
         String member,
         @Bind("$node") Node node,
         @Cached.Shared("lookupNode") @Cached LookupNode lookupNode,
+        @Cached(inline = true) FieldGetNode getNode,
         @Cached.Shared("error") @Cached InlinedBranchProfile error
     ) throws UnknownIdentifierException, UnsupportedMessageException {
         if (isNull()) {
@@ -102,23 +98,14 @@ public final class BindingInstanceTO implements TruffleObject {
             throw UnsupportedMessageException.create();
         }
 
-        CompiledMember cm = lookupNode.execute(node, compiled, member);
+        CompiledMember cm = lookupNode.execute(node, bindings, member);
 
         if (cm == null) {
             error.enter(node);
             throw UnknownIdentifierException.create(member);
         }
 
-        // cached read for specific things
-        if (cm.getCacheSlot() != -1) {
-            if (cache[cm.getCacheSlot()] == null) {
-                cache[cm.getCacheSlot()] = cm.read(target);
-            }
-
-            return cache[cm.getCacheSlot()];
-        } else {
-            return cm.read(target);
-        }
+        return getNode.execute(node, cm, receiver);
     }
 
     @ExportMessage
@@ -133,14 +120,14 @@ public final class BindingInstanceTO implements TruffleObject {
             throw UnsupportedMessageException.create();
         }
 
-        CompiledMember cm = lookupNode.execute(node, compiled, member);
+        CompiledMember cm = lookupNode.execute(node, bindings, member);
 
         if (cm == null) {
             error.enter(node);
             throw UnknownIdentifierException.create(member);
         }
 
-        cm.write(target, value);
+        cm.write(receiver, value);
     }
 
     @ExportMessage
@@ -157,7 +144,7 @@ public final class BindingInstanceTO implements TruffleObject {
             throw UnsupportedMessageException.create();
         }
 
-        CompiledMember cm = lookupNode.execute(node, compiled, member);
+        CompiledMember cm = lookupNode.execute(node, bindings, member);
 
         if (cm == null) {
             error.enter(node);
@@ -169,6 +156,6 @@ public final class BindingInstanceTO implements TruffleObject {
             throw ArityException.create(cm.getArity(), cm.getArity(), args.length);
         }
 
-        return invokeNode.execute(node, (FunctionMember) cm, target, args);
+        return invokeNode.execute(node, (FunctionMember) cm, receiver, args);
     }
 }

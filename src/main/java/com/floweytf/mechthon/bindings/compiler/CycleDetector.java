@@ -1,14 +1,14 @@
 package com.floweytf.mechthon.bindings.compiler;
 
-import com.floweytf.mechthon.bindings.impl.BindingBuilderImpl;
+import com.floweytf.mechthon.bindings.impl.BaseBindingBuilder;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import java.util.Set;
 
 class CycleDetector {
-    private final Set<BindingBuilderImpl> visiting = new ReferenceOpenHashSet<>();
-    private final Set<BindingBuilderImpl> visited = new ReferenceOpenHashSet<>();
+    private final Set<BaseBindingBuilder> visiting = new ReferenceOpenHashSet<>();
+    private final Set<BaseBindingBuilder> visited = new ReferenceOpenHashSet<>();
 
-    static void detectCycles(final Set<BindingBuilderImpl> nodes) {
+    static void detectCycles(final Set<BaseBindingBuilder> nodes) {
         final var state = new CycleDetector();
 
         for (final var n : nodes) {
@@ -20,7 +20,7 @@ class CycleDetector {
         }
     }
 
-    private boolean detectCyclesDfs(BindingBuilderImpl node) {
+    private boolean detectCyclesDfs(BaseBindingBuilder node) {
         if (visited.contains(node)) {
             return false;
         }
@@ -32,11 +32,10 @@ class CycleDetector {
         visiting.add(node);
         try {
             final var parents = node.getParents();
-            if (parents != null) {
-                for (final var p : parents) {
-                    if (detectCyclesDfs(p)) {
-                        return true;
-                    }
+
+            for (final var p : parents) {
+                if (detectCyclesDfs(p)) {
+                    return true;
                 }
             }
 

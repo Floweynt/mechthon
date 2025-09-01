@@ -24,11 +24,18 @@ java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(17))
 }
 
+val codeGeneratorSourceSet = sourceSets.create("codegen")
+
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
     compileOnly("dev.jorel:commandapi-bukkit-core:9.4.1")
-    shadow(implementation("org.graalvm.polyglot:polyglot:23.1.2")!!)
-    shadow(implementation("org.graalvm.polyglot:python-community:23.1.2")!!)
+    compileOnly("org.graalvm.python:python-language:23.1.8")
+    "codegenImplementation"("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
+    "codegenImplementation"("org.ow2.asm:asm:9.8")
+    "codegenImplementation"("org.ow2.asm:asm-tree:9.8")
+    "codegenImplementation"("org.jetbrains:annotations:26.0.2")
+    shadow(implementation("org.graalvm.polyglot:polyglot:23.1.8")!!)
+    shadow(implementation("org.graalvm.polyglot:python-community:23.1.8")!!)
 }
 
 paper {
@@ -72,5 +79,9 @@ tasks {
 
     shadowJar {
         mergeServiceFiles()
+        // evil hack to patch out the GIL
+        filesMatching("com/oracle/graal/python/nodes/call/CallNode.class") {
+            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        }
     }
 }

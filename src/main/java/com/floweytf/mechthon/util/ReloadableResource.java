@@ -13,6 +13,7 @@ public class ReloadableResource<T extends AutoCloseable> implements AutoCloseabl
     public ReloadableResource() {
     }
 
+    @SuppressWarnings("ThrowFromFinallyBlock")
     public synchronized boolean reload(Supplier<T> reloader, Runnable onComplete) {
         Objects.requireNonNull(onComplete, "onComplete cannot be null");
         Objects.requireNonNull(reloader, "Reloader cannot be null");
@@ -38,7 +39,7 @@ public class ReloadableResource<T extends AutoCloseable> implements AutoCloseabl
                         try {
                             oldInstance.close();
                         } catch (Exception e) {
-                            Util.sneakyThrow(e);
+                            throw Util.sneakyThrow(e);
                         }
                     }
                 }
@@ -59,6 +60,7 @@ public class ReloadableResource<T extends AutoCloseable> implements AutoCloseabl
         return instance;
     }
 
+    @SuppressWarnings("ThrowFromFinallyBlock")
     @Override
     public void close() {
         CompletableFuture<Void> future;
@@ -83,7 +85,7 @@ public class ReloadableResource<T extends AutoCloseable> implements AutoCloseabl
                 try {
                     inst.close();
                 } catch (Exception e) {
-                    Util.sneakyThrow(e);
+                    throw Util.sneakyThrow(e);
                 }
             }
         }

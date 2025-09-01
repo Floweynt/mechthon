@@ -1,8 +1,8 @@
 from abc import abstractmethod
-from typing import Any, Callable, Protocol
-from _internal import GenericAwaitable
+from typing import Any, Callable
+from _internal.coro import GenericAwaitable
 
-class Scheduler(Protocol):
+class Scheduler:
     async def await_tick(self, ticks: int): 
         await GenericAwaitable(lambda cont: self.schedule(lambda: cont(None), ticks))
     

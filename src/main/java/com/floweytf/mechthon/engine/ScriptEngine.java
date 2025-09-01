@@ -33,27 +33,20 @@ public class ScriptEngine implements AutoCloseable {
             .build();
 
         bootstrap = Util.profile(() -> new Bootstrap(context), events::perfBootstrap);
-
-        bindings = Util.profile(() -> {
-            StaticSources.BINDINGS.forEach(binding -> bootstrap.definePythonModule(
-                "mechs", binding.name(), binding.source(), binding.isPackage()
-            ));
-
-            return new Bindings(context);
-        }, events::perfBindings);
+        bindings = Util.profile(() -> new Bindings(context), events::perfBindings);
 
         context.getBindings("python").putMember("__api", new APIAccess(plugin, this, bindings));
 
         try {
             Files.createDirectories(root);
         } catch (IOException e) {
-            Util.sneakyThrow(e);
+            throw Util.sneakyThrow(e);
         }
 
         try (final var stream = Files.walk(root)) {
             final var loadTime = Util.profile(() -> stream.filter(Files::isRegularFile).forEach(path -> {
                 if (!path.getFileName().toString().endsWith(EXTENSION)) {
-                    events.warnIllegalExtension(path); // "Non-python script file found, skipping: {}",
+                    events.warnIllegalExtension(path);
                     return;
                 }
 
@@ -61,7 +54,6 @@ public class ScriptEngine implements AutoCloseable {
                 final var scriptName = relativeDir.substring(0, relativeDir.length() - EXTENSION.length());
 
                 if (!Key.parseableNamespace(scriptName)) {
-                    // "Bad script name, skipping: {}",
                     events.warnBadName(scriptName, path);
                     return;
                 }

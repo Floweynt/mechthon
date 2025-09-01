@@ -2,8 +2,11 @@ import importlib.util
 import sys
 from typing import Any
 
-__current_script_instance: Any 
+__current_script_instance: Any
 __api: Any
+__library_dir: str
+
+sys.path.append(__library_dir) # type:ignore
 
 def load_script(script_instance, source_code: str):
     global __current_script_instance
@@ -26,9 +29,6 @@ def make_module_helper(package: str, name: str, is_package: bool):
     module.__package__ = package
     sys.modules[name] = module
     return module.__dict__
-
-def define_python_module(package: str, name: str, source_code: str, is_package: bool):
-    exec(compile(source_code, filename=f"@builtin:{name}.py", mode="exec"), make_module_helper(package, name, is_package))
 
 def bootstrap():
     internal_mod = make_module_helper("_mechthon_builtin", "_mechthon_builtin", False)

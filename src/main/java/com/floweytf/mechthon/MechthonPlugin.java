@@ -5,11 +5,15 @@ import com.floweytf.mechthon.engine.ScriptEngine;
 import com.floweytf.mechthon.util.ReloadableResource;
 import com.floweytf.mechthon.util.Util;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.NamespacedKey;
+import org.bukkit.entity.EntityType;
 import org.bukkit.plugin.java.JavaPlugin;
 
 @SuppressWarnings("unused")
@@ -26,6 +30,19 @@ public class MechthonPlugin extends JavaPlugin {
     public void onLoad() {
         Preconditions.checkState(instance == null);
         instance = this;
+
+        getSLF4JLogger().info("unpacking libraries...");
+        MechthonApiImpl.INSTANCE.registerPythonModule(this, "mechs", "/mechthon/mechs/");
+
+        try {
+            MechthonApiImpl.INSTANCE.initialize(getDataFolder().toPath());
+        } catch (IOException e) {
+            throw Util.sneakyThrow(e);
+        }
+
+        final var s = Arrays.stream(EntityType.values())
+            .map(EntityType::getEntityClass)
+            .collect(Collectors.toSet());
 
         Preconditions.checkState(reloadEngine(
             LoadHandler.logging(getSLF4JLogger()),

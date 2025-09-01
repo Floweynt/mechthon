@@ -1,3 +1,4 @@
+# exposition only
 from abc import abstractmethod
 from typing import Any, Callable, Protocol
 from mechs.types import Message

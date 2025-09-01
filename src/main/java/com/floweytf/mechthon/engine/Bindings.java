@@ -15,6 +15,10 @@ public class Bindings {
     }
 
     Bindings(Context context) {
+        context.eval("python", """
+        import mechs.entity 3
+        """);
+
         this.modules = context.getBindings("python").getMember("sys").getMember("modules");
         this.entityConstructor = fetch("mechs.entity", "Entity");
         this.messageConstructor = fetch("mechs.types", "Message");

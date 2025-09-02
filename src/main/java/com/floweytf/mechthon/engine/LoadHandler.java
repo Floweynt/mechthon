@@ -7,7 +7,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.graalvm.polyglot.PolyglotException;
 import org.slf4j.Logger;
 
-import static com.floweytf.mechthon.MechthonPlugin.sendMessage;
+import static com.floweytf.mechthon.util.Util.sendMessage;
 
 public interface LoadHandler {
     void perfBootstrap(long ms);

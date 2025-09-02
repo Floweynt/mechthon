@@ -1,5 +1,5 @@
 from collections.abc import Callable, Coroutine
-from typing import Any
+from typing import Any, TypeVar
 
 class GenericAwaitable:
     def __init__(self, task: Callable[[Callable[[Any], None]], None]):
@@ -15,7 +15,9 @@ def pump_coro(coro: Coroutine, last_result = None):
     else:
         task(lambda result: pump_coro(coro, result))
 
-def run_possibly_async[T](arg: T, func: Callable[[T], Any | Coroutine[Any, Any, Any]]):
+T = TypeVar('T')
+
+def run_possibly_async(arg: T, func: Callable[[T], Any | Coroutine[Any, Any, Any]]):
     res = func(arg)
     if isinstance(res, Coroutine):
         pump_coro(res)

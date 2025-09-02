@@ -1,7 +1,7 @@
 from typing import Any, Callable, Coroutine
 from _mechthon_builtin import current_script_instance 
 from mechs._internal.coro import run_possibly_async
-from mechs.entity import Entity
+from mechs.bindings.entity import Entity
 
 def ticker(func: Callable[[Entity], Any | Coroutine[Any, Any, Any]], delay: int = 1):
     current_script_instance().registerTicker(delay, lambda e: run_possibly_async(e, func))

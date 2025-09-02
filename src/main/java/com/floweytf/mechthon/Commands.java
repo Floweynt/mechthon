@@ -1,18 +1,22 @@
 package com.floweytf.mechthon;
 
 import com.floweytf.mechthon.engine.LoadHandler;
+import com.floweytf.mechthon.util.Util;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.ArgumentSuggestions;
 import dev.jorel.commandapi.arguments.StringArgument;
 import dev.jorel.commandapi.executors.ExecutorType;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Entity;
+import org.codehaus.plexus.util.ExceptionUtils;
+
+import static net.kyori.adventure.text.Component.text;
 
 public class Commands {
     private static StringArgument scriptArg(MechthonPlugin plugin) {
         final var arg = new StringArgument("script");
-        arg.replaceSuggestions(
-            ArgumentSuggestions.strings(c -> plugin.getEngine().getScripts().keySet().toArray(String[]::new))
+        arg.replaceSuggestions(ArgumentSuggestions.strings(c ->
+            plugin.getEngine().getScriptManager().getScripts().keySet().toArray(String[]::new))
         );
 
         return arg;
@@ -22,7 +26,11 @@ public class Commands {
         final var arg = new StringArgument("trigger");
 
         arg.replaceSuggestions(ArgumentSuggestions.strings(ctx -> {
-            final var script = plugin.getEngine().getScripts().get(ctx.previousArgs().getByArgument(scriptArg));
+            final var script = plugin.getEngine()
+                .getScriptManager()
+                .getScripts()
+                .get(ctx.previousArgs().getByArgument(scriptArg));
+
             if (script == null) {
                 return new String[0];
             }
@@ -35,18 +43,34 @@ public class Commands {
 
     private static CommandAPICommand reload(MechthonPlugin plugin) {
         return new CommandAPICommand("reload").executes((sender, args) -> {
-            final var res = plugin.reloadEngine(
+            plugin.getSLF4JLogger().info("reloading scripts...");
+
+            final var res = plugin.getEngine().getScriptManager().reloadScripts(
                 LoadHandler.of(
                     LoadHandler.logging(plugin.getSLF4JLogger()),
                     LoadHandler.broadcasting(sender)
                 ),
-                () -> MechthonPlugin.sendMessage(sender, NamedTextColor.WHITE, "reload complete")
+                () -> {
+                    plugin.getSLF4JLogger().info("reload complete");
+
+                    Util.sendMessage(sender, NamedTextColor.WHITE, "reload complete");
+                },
+                e -> {
+                    plugin.getSLF4JLogger().error("while reloading: ", e);
+
+                    Util.sendMessage(
+                        sender,
+                        text("uncaught exception while reloading, check logs")
+                            .color(NamedTextColor.RED)
+                            .hoverEvent(text(ExceptionUtils.getFullStackTrace(e)).color(NamedTextColor.RED))
+                    );
+                }
             );
 
             if (res) {
-                MechthonPlugin.sendMessage(sender, NamedTextColor.WHITE, "starting reload...");
+                Util.sendMessage(sender, NamedTextColor.WHITE, "starting reload...");
             } else {
-                MechthonPlugin.sendMessage(sender, NamedTextColor.RED, "reload already in progress");
+                Util.sendMessage(sender, NamedTextColor.RED, "reload already in progress");
             }
         });
     }

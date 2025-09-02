@@ -15,4 +15,5 @@ public class StaticSources {
     }
 
     public static final String BOOTSTRAP = read("/mechthon/bootstrap.py");
+    public static final String BINDINGS = read("/mechthon/bindings.py");
 }

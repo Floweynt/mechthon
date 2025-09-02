@@ -1,91 +1,74 @@
 package com.floweytf.mechthon.engine;
 
 import com.floweytf.mechthon.MechthonPlugin;
+import com.floweytf.mechthon.util.Paths;
 import com.floweytf.mechthon.util.Util;
 import com.google.common.base.Preconditions;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Map;
-import net.kyori.adventure.key.Key;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.HostAccess;
-import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Value;
 
 public class ScriptEngine implements AutoCloseable {
-
-    private static final String EXTENSION = ".py";
-
     private final Context context;
     private final Bootstrap bootstrap;
     private final Bindings bindings;
-    private final Map<String, ScriptInstance> scripts = new Object2ObjectOpenHashMap<>();
+    private final ScriptManager scriptManager;
 
-    public ScriptEngine(MechthonPlugin plugin, Path root, LoadHandler events) {
-        this.context = Context.newBuilder("python")
-            .allowAllAccess(false)
-            .allowHostAccess(HostAccess.ALL)
+    private boolean closed;
+
+    public ScriptEngine(MechthonPlugin plugin, Paths paths, LoadHandler events) {
+        context = Context.newBuilder("python")
+            .allowAllAccess(true)
+            .hostClassLoader(ScriptEngine.class.getClassLoader())
             .option("engine.WarnInterpreterOnly", "false")
+            .option("python.DontWriteBytecodeFlag", "false")
+            .option("python.PyCachePrefix", paths.root().toAbsolutePath().toString())
             .build();
 
+        context.getBindings("python").putMember("__library_dir", paths.libs().toAbsolutePath().toString());
+
         bootstrap = Util.profile(() -> new Bootstrap(context), events::perfBootstrap);
-        bindings = Util.profile(() -> new Bindings(context), events::perfBindings);
+        bindings = Util.profile(() -> new Bindings(bootstrap), events::perfBindings);
 
         context.getBindings("python").putMember("__api", new APIAccess(plugin, this, bindings));
 
         try {
-            Files.createDirectories(root);
+            Files.createDirectories(paths.scripts());
         } catch (IOException e) {
             throw Util.sneakyThrow(e);
         }
 
-        try (final var stream = Files.walk(root)) {
-            final var loadTime = Util.profile(() -> stream.filter(Files::isRegularFile).forEach(path -> {
-                if (!path.getFileName().toString().endsWith(EXTENSION)) {
-                    events.warnIllegalExtension(path);
-                    return;
-                }
-
-                final var relativeDir = root.relativize(path).toString();
-                final var scriptName = relativeDir.substring(0, relativeDir.length() - EXTENSION.length());
-
-                if (!Key.parseableNamespace(scriptName)) {
-                    events.warnBadName(scriptName, path);
-                    return;
-                }
-
-                try {
-                    final var script = new ScriptInstance(scriptName);
-                    bootstrap.loadScript(script, Files.readString(path));
-                    script.freeze();
-                    scripts.put(scriptName, script);
-                } catch (IOException e) {
-                    events.warnIOException(scriptName, path, e);
-                } catch (PolyglotException e) {
-                    events.warnPolyglotException(scriptName, path, e);
-                }
-            }));
-
-            events.perfLoad(scripts.size(), loadTime);
-        } catch (IOException e) {
-            events.warnException(e);
-        }
+        scriptManager = new ScriptManager(plugin, paths, bootstrap, this, events);
     }
 
     @Override
     public void close() {
-        context.close();
+        Preconditions.checkState(Bukkit.isPrimaryThread());
+
+        if (closed) {
+            return;
+        }
+
+        closed = true;
+        context.close(true);
     }
 
-    public Map<String, ScriptInstance> getScripts() {
-        return Collections.unmodifiableMap(scripts);
+    public boolean isClosed() {
+        return closed;
+    }
+
+    public ScriptManager getScriptManager() {
+        return scriptManager;
     }
 
     public Value invokeScript(Entity entity, String name) {
+        Preconditions.checkState(Bukkit.isPrimaryThread());
+        Preconditions.checkState(!isClosed());
+
+        final var scripts = scriptManager.getScripts();
         final var script = scripts.get(name);
         Preconditions.checkArgument(script != null, "unknown script '%s'", name);
         Preconditions.checkArgument(script.getMain() != null, "script '%s' does not have an entry point", name);
@@ -93,6 +76,10 @@ public class ScriptEngine implements AutoCloseable {
     }
 
     public Value invokeTrigger(Entity entity, String name, String triggerName) {
+        Preconditions.checkState(Bukkit.isPrimaryThread());
+        Preconditions.checkState(!isClosed());
+
+        final var scripts = scriptManager.getScripts();
         final var script = scripts.get(name);
         Preconditions.checkArgument(script != null, "unknown script '%s'", name);
         final var trigger = script.getTriggerable().get(triggerName);

@@ -196,7 +196,8 @@ public abstract class CallNode extends PNodeWithContext {
             keywordsError.enter(inliningTarget);
             throw raise.raise(PythonErrorType.TypeError, ErrorMessages.INVALID_INSTANTIATION_OF_FOREIGN_OBJ);
         }
-        // gil.release(true); - patch: disable GIL unlocking
+        // patch: disable GIL unlocking
+        // gil.release(true);
         try {
             return fromForeign.executeConvert(interop.invokeMember(callable.receiver, callable.methodName, arguments));
         } catch (ArityException | UnsupportedTypeException | UnsupportedMessageException e) {
@@ -206,7 +207,8 @@ public abstract class CallNode extends PNodeWithContext {
             // PyObjectGetMethod is supposed to have checked isMemberInvocable
             throw CompilerDirectives.shouldNotReachHere("Cannot invoke member");
         } finally {
-            // gil.acquire(); - patch: disable GIL unlocking
+            // patch: disable GIL unlocking
+            // gil.acquire();
         }
     }
 

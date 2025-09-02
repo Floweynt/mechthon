@@ -1,34 +1,17 @@
 package com.floweytf.mechthon.engine;
 
-import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Entity;
-import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 
 public class Bindings {
-    private final Value modules;
     private final Value entityConstructor;
-    private final Value messageConstructor;
 
-    private Value fetch(String module, String name) {
-        return modules.getHashValue(module).getMember(name);
-    }
-
-    Bindings(Context context) {
-        context.eval("python", """
-        import mechs.entity 3
-        """);
-
-        this.modules = context.getBindings("python").getMember("sys").getMember("modules");
-        this.entityConstructor = fetch("mechs.entity", "Entity");
-        this.messageConstructor = fetch("mechs.types", "Message");
+    Bindings(Bootstrap bootstrap) {
+        final var res = bootstrap.execSandboxed(StaticSources.BINDINGS, "@builtin/bootstrap.py");
+        entityConstructor = res.getHashValue("wrap_entity");
     }
 
     public Value createEntity(Entity entity) {
         return entityConstructor.execute(entity);
-    }
-
-    public Value createComponent(Component component) {
-        return messageConstructor.execute(component);
     }
 }

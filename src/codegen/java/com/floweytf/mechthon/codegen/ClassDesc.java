@@ -103,7 +103,7 @@ public record ClassDesc(Class<?> clazz, List<Property> properties, List<Method> 
         builder.printf("""
                 @binding_constructor("%s")
                 def __init__(self, delegate: BukkitType):
-                    super().__init__(self, delegate)
+                    self._delegate = delegate
             
             """, clazz.getName());
 
@@ -177,7 +177,7 @@ public record ClassDesc(Class<?> clazz, List<Property> properties, List<Method> 
             }
 
             if (method.getReturnType() == void.class && method.getParameterCount() == 0) {
-                builder.printf("    def %s(): self._delegate.%s()\n", CONVERTER_LC.convert(method.getName()),
+                builder.printf("    def %s(self): self._delegate.%s()\n", CONVERTER_LC.convert(method.getName()),
                     method.getName());
             } else {
                 builder.printf("    # TODO: method %s\n", method.toGenericString());

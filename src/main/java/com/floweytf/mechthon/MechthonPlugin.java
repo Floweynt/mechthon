@@ -2,28 +2,25 @@ package com.floweytf.mechthon;
 
 import com.floweytf.mechthon.engine.LoadHandler;
 import com.floweytf.mechthon.engine.ScriptEngine;
-import com.floweytf.mechthon.util.ReloadableResource;
+import com.floweytf.mechthon.util.Paths;
 import com.floweytf.mechthon.util.Util;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextColor;
-import org.bukkit.NamespacedKey;
 import org.bukkit.entity.EntityType;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
 public class MechthonPlugin extends JavaPlugin {
-    private static final Component BASE = Component.text("[")
-        .append(Component.text("ScriptEngine", NamedTextColor.GOLD))
-        .append(Component.text("] "));
     private static MechthonPlugin instance = null;
 
-    private final ReloadableResource<ScriptEngine> engine = new ReloadableResource<>();
+    @Nullable
+    private CompletableFuture<ScriptEngine> engineFuture;
+    private final Paths paths = new Paths(getDataFolder().toPath());
 
     // initialization logic
     @Override
@@ -35,7 +32,7 @@ public class MechthonPlugin extends JavaPlugin {
         MechthonApiImpl.INSTANCE.registerPythonModule(this, "mechs", "/mechthon/mechs/");
 
         try {
-            MechthonApiImpl.INSTANCE.initialize(getDataFolder().toPath());
+            MechthonApiImpl.INSTANCE.initialize(paths);
         } catch (IOException e) {
             throw Util.sneakyThrow(e);
         }
@@ -44,10 +41,10 @@ public class MechthonPlugin extends JavaPlugin {
             .map(EntityType::getEntityClass)
             .collect(Collectors.toSet());
 
-        Preconditions.checkState(reloadEngine(
-            LoadHandler.logging(getSLF4JLogger()),
-            () -> {
-            }
+        engineFuture = CompletableFuture.supplyAsync(() -> new ScriptEngine(
+            this,
+            paths,
+            LoadHandler.logging(getSLF4JLogger())
         ));
 
         Commands.register(this);
@@ -55,15 +52,18 @@ public class MechthonPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        getSLF4JLogger().info("mechthon loading blocked main thread for {}ms", Util.profile(this::awaitEngineReload));
+        getSLF4JLogger().info(
+            "mechthon loading blocked main thread for {}ms",
+            Util.profile(() -> Objects.requireNonNull(engineFuture).join())
+        );
     }
 
     @Override
     public void onDisable() {
         Preconditions.checkState(instance != null);
         instance = null;
-
-        engine.close();
+        getEngine().close();
+        engineFuture = null;
     }
 
     public static MechthonPlugin instance() {
@@ -71,27 +71,10 @@ public class MechthonPlugin extends JavaPlugin {
         return instance;
     }
 
-    public static NamespacedKey key(String value) {
-        return new NamespacedKey("mechthon", value);
-    }
-
-    public static void sendMessage(Audience audience, TextColor color, String message, Object... args) {
-        audience.sendMessage(BASE.append(Component.text(String.format(message, args), color)));
-    }
-
-    public boolean reloadEngine(LoadHandler handler, Runnable onComplete) {
-        return engine.reload(() -> new ScriptEngine(
-            this,
-            getDataFolder().toPath().resolve("scripts"),
-            handler
-        ), onComplete);
-    }
-
-    public void awaitEngineReload() {
-        engine.awaitReload();
-    }
-
     public ScriptEngine getEngine() {
-        return engine.get();
+        Preconditions.checkState(engineFuture != null, "getEngine() called before onLoad()");
+        final var res = engineFuture.getNow(null);
+        Preconditions.checkState(engineFuture != null, "getEngine() called before onEnable()");
+        return res;
     }
 }

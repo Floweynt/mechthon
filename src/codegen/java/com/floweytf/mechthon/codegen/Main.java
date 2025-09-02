@@ -105,7 +105,15 @@ public class Main {
         for (final var task : tasks) {
             final var path = outputDir.resolve(task.first().path);
             Files.createDirectories(path.getParent());
-            Files.writeString(path, task.right());
+
+            final var str = """
+            from enum import Enum, auto
+            from mechs._internal import *
+            from mechs._internal.mirrors import *
+            
+            """ + task.right();
+
+            Files.writeString(path, str);
         }
 
         try (final var pw = new PrintWriter(Files.newOutputStream(outputDir.resolve("entity/_entity_type.py")))) {

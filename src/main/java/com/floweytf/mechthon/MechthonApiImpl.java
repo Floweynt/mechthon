@@ -1,6 +1,7 @@
 package com.floweytf.mechthon;
 
 import com.floweytf.mechthon.api.Mechthon;
+import com.floweytf.mechthon.util.Paths;
 import com.floweytf.mechthon.util.Util;
 import com.google.common.base.Preconditions;
 import it.unimi.dsi.fastutil.Pair;
@@ -36,19 +37,17 @@ public class MechthonApiImpl implements Mechthon {
         }
     }
 
-    public void initialize(Path configPath) throws IOException {
+    public void initialize(Paths paths) throws IOException {
         Preconditions.checkState(!isInit, "initialize() called twice");
         isInit = true;
 
-        final var libDir = configPath.resolve("libraries");
-
         try {
-            Util.rmRecursive(configPath);
+            Util.rmRecursive(paths.libs());
         } catch (IOException ignored) {
         }
 
         // try and delete the dir
-        Files.createDirectories(libDir);
+        Files.createDirectories(paths.libs());
 
         for (final var toLoad : modules.entrySet()) {
             final var plugin = toLoad.getValue().first();
@@ -60,7 +59,7 @@ public class MechthonApiImpl implements Mechthon {
             try (final var fs = FileSystems.newFileSystem(Path.of(url.toURI()))) {
                 Util.copyFolder(
                     fs.getPath(path),
-                    libDir.resolve(moduleName)
+                    paths.libs().resolve(moduleName)
                 );
             } catch (URISyntaxException e) {
                 throw Util.sneakyThrow(e);

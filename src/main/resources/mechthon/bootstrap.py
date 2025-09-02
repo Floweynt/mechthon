@@ -8,19 +8,23 @@ __library_dir: str
 
 sys.path.append(__library_dir) # type:ignore
 
-def load_script(script_instance, source_code: str):
-    global __current_script_instance
-    __current_script_instance = script_instance
-
+def exec_sandboxed(source_code, filename):
     globals = {
         "__name__": "__main__",
     }
 
     exec(
-        compile(source_code, filename=f"{script_instance.getName()}.py", mode="exec"),
+        compile(source_code, filename=filename, mode="exec"),
         globals,
         globals
     )
+
+    return globals
+
+def load_script(script_instance, source_code: str):
+    global __current_script_instance
+    __current_script_instance = script_instance
+    exec_sandboxed(source_code, f"{script_instance.getName()}.py")
 
 def make_module_helper(package: str, name: str, is_package: bool):
     spec = importlib.util.spec_from_loader(name, loader=None, is_package=is_package)

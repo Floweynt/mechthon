@@ -1,6 +1,8 @@
 package com.floweytf.mechthon.codegen;
 
 import com.destroystokyo.paper.entity.RangedEntity;
+import io.papermc.paper.entity.Bucketable;
+import io.papermc.paper.entity.CollarColorable;
 import io.papermc.paper.entity.Shearable;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -24,9 +26,12 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Minecart;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Monster;
+import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
+import org.bukkit.entity.Sittable;
 import org.bukkit.entity.Steerable;
 import org.bukkit.entity.Tameable;
+import org.bukkit.entity.Vehicle;
 import org.bukkit.generator.WorldInfo;
 
 public enum Packaging {
@@ -37,7 +42,14 @@ public enum Packaging {
             Ambient.class, RangedEntity.class, Boss.class,
             Explosive.class, Flying.class, Tameable.class,
             Animals.class, Steerable.class, Enemy.class, Monster.class,
-            Shearable.class
+            Shearable.class, LivingEntity.class, Mob.class, Damageable.class,
+            CollarColorable.class, Sittable.class, Vehicle.class, Bucketable.class
+        )::contains
+    ),
+    PLAYER(
+        "entity/_player.py",
+        Set.of(
+            Player.class
         )::contains
     ),
     BOAT("entity/_boat.py", Boat.class::isAssignableFrom),
@@ -47,7 +59,6 @@ public enum Packaging {
     PROJECTILES("entity/_projectiles.py", Projectile.class::isAssignableFrom),
     ANIMALS("entity/_animal.py", Animals.class::isAssignableFrom),
     MOB("entity/_mobs.py", Mob.class::isAssignableFrom),
-    LIVING_BASE("entity/_living_base.py", x -> x == LivingEntity.class || x == Damageable.class),
     LIVING("entity/_living.py", LivingEntity.class::isAssignableFrom),
     ENTITY("entity/_entity.py", Entity.class::equals),
     ENTITY_MISC("entity/_misc.py", Entity.class::isAssignableFrom),

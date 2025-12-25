@@ -1,8 +1,8 @@
 package com.floweytf.mechthon.engine;
 
 import com.floweytf.mechthon.MechthonPlugin;
+import com.floweytf.mechthon.persist.GlobalPersistentKeyMetadata;
 import io.papermc.paper.threadedregions.scheduler.EntityScheduler;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.graalvm.polyglot.Value;
 
@@ -19,12 +19,16 @@ public record APIAccess(MechthonPlugin plugin, ScriptEngine engine, Bindings bin
         entityScheduler.execute(
             plugin,
             () -> {
-                if(!engine.isClosed()) {
+                if (!engine.isClosed()) {
                     value.executeVoid();
                 }
             },
             null,
             delay
         );
+    }
+
+    public GlobalPersistentKeyMetadata getGlobalPersistentKey(String name) {
+        return engine.scriptManager().globalPersistentKeys().get(name);
     }
 }

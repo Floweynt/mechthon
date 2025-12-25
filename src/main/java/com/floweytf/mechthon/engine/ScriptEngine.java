@@ -25,7 +25,7 @@ public class ScriptEngine implements AutoCloseable {
             .hostClassLoader(ScriptEngine.class.getClassLoader())
             .option("engine.WarnInterpreterOnly", "false")
             .option("python.DontWriteBytecodeFlag", "false")
-            .option("python.PyCachePrefix", paths.root().toAbsolutePath().toString())
+            .option("python.PyCachePrefix", paths.cache().toAbsolutePath().toString())
             .build();
 
         context.getBindings("python").putMember("__library_dir", paths.libs().toAbsolutePath().toString());
@@ -60,15 +60,17 @@ public class ScriptEngine implements AutoCloseable {
         return closed;
     }
 
-    public ScriptManager getScriptManager() {
+    public ScriptManager scriptManager() {
         return scriptManager;
     }
 
     public Value invokeScript(Entity entity, String name) {
         Preconditions.checkState(Bukkit.isPrimaryThread());
         Preconditions.checkState(!isClosed());
+        Preconditions.checkArgument(entity != null);
+        Preconditions.checkArgument(name != null);
 
-        final var scripts = scriptManager.getScripts();
+        final var scripts = scriptManager.scripts();
         final var script = scripts.get(name);
         Preconditions.checkArgument(script != null, "unknown script '%s'", name);
         Preconditions.checkArgument(script.getMain() != null, "script '%s' does not have an entry point", name);
@@ -78,12 +80,24 @@ public class ScriptEngine implements AutoCloseable {
     public Value invokeTrigger(Entity entity, String name, String triggerName) {
         Preconditions.checkState(Bukkit.isPrimaryThread());
         Preconditions.checkState(!isClosed());
+        Preconditions.checkArgument(entity != null);
+        Preconditions.checkArgument(name != null);
+        Preconditions.checkArgument(triggerName != null);
 
-        final var scripts = scriptManager.getScripts();
+        final var scripts = scriptManager.scripts();
         final var script = scripts.get(name);
         Preconditions.checkArgument(script != null, "unknown script '%s'", name);
-        final var trigger = script.getTriggerable().get(triggerName);
+        final var trigger = script.triggerables().get(triggerName);
         Preconditions.checkArgument(trigger != null, "script '%s' does not have trigger '%s'", name, triggerName);
         return trigger.execute(bindings.createEntity(entity));
+    }
+
+    public Value invokeTicker(Entity entity, ScriptInstance.Ticker ticker) {
+        Preconditions.checkState(Bukkit.isPrimaryThread());
+        Preconditions.checkState(!isClosed());
+        Preconditions.checkArgument(entity != null);
+        Preconditions.checkArgument(ticker != null);
+
+        return ticker.callback().execute(bindings.createEntity(entity));
     }
 }

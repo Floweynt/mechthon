@@ -1,3 +1,4 @@
+from mechs.bindings.persistent import PersistentContainer, PersistentKey
 from mechs.types import SimpleMap, Vec3
 from mechs.bindings.misc import CommandSender, Emitter, HoverEventSource, Metadatable, Nameable, PersistentDataHolder
 from mechs._internal import *
@@ -52,6 +53,9 @@ class Entity(Metadatable, CommandSender, Nameable, PersistentDataHolder, HoverEv
         if not hasattr(self, '_scheduler'):
             self._scheduler = _EntityScheduler(self._delegate)
         return self._scheduler
+
+    @property
+    def persistent_data(self) -> PersistentContainer: ...
 
     # basic getters 
     @property

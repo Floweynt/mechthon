@@ -3,6 +3,7 @@ from ._categories import *
 from mechs.bindings.misc import Colorable, InventoryHolder
 from mechs._internal import *
 from mechs._internal.mirrors import *
+from ._mappings import wrap_entity
 
 class Strider(Steerable, Vehicle):
     @binding_constructor("org.bukkit.entity.Strider")
@@ -16,20 +17,23 @@ class Fox(Animals, Sittable):
     def __init__(self, delegate: BukkitType):
         self._delegate = delegate
 
-    is_leaping = RWProp[bool]("isLeaping", "setLeaping")
-    # TODO: property first_trusted_player getFirstTrustedPlayer setFirstTrustedPlayer
-    is_crouching = RWProp[bool]("isCrouching", "setCrouching")
-    is_faceplanted = RWProp[bool]("isFaceplanted", "setFaceplanted")
     class Type(Enum):
         RED = auto()
         SNOW = auto()
-
     _type_enum_mirror = EnumMirror(Type, "org.bukkit.entity.Fox$Type")
+
     fox_type = TransformedRWProp[Type]("getFoxType", "setFoxType", _type_enum_mirror.from_native, _type_enum_mirror.to_native)
+
+    is_leaping = RWProp[bool]("isLeaping", "setLeaping")
+    is_crouching = RWProp[bool]("isCrouching", "setCrouching")
+    is_faceplanted = RWProp[bool]("isFaceplanted", "setFaceplanted")
     is_defending = RWProp[bool]("isDefending", "setDefending")
-    # TODO: property second_trusted_player getSecondTrustedPlayer setSecondTrustedPlayer
     is_interested = RWProp[bool]("isInterested", "setInterested")
-    # TODO: method public abstract void org.bukkit.entity.Fox.setSleeping(boolean)
+
+    def set_sleeping(self, sleeping: bool = True): self._delegate.setSleeping(sleeping)
+
+    # TODO: property first_trusted_player getFirstTrustedPlayer setFirstTrustedPlayer
+    # TODO: property second_trusted_player getSecondTrustedPlayer setSecondTrustedPlayer
 
 class Sniffer(Animals):
     @binding_constructor("org.bukkit.entity.Sniffer")
@@ -117,13 +121,16 @@ class Frog(Animals):
 
     _variant_enum_mirror = EnumMirror(Variant, "org.bukkit.entity.Frog$Variant")
     variant = TransformedRWProp[Variant]("getVariant", "setVariant", _variant_enum_mirror.from_native, _variant_enum_mirror.to_native)
-    # TODO: property tongue_target getTongueTarget setTongueTarget
+    tongue_target = TransformedRWProp[Optional[Entity]](
+        "getTongueTarget", "setTongueTarget",
+        lambda x: None if x is None else wrap_entity(x),
+        lambda x: None if x is None else x._delegate 
+    )
 
 class Pig(Steerable, Vehicle):
     @binding_constructor("org.bukkit.entity.Pig")
     def __init__(self, delegate: BukkitType):
         self._delegate = delegate
-
 
 class Bee(Animals):
     @binding_constructor("org.bukkit.entity.Bee")
@@ -131,7 +138,13 @@ class Bee(Animals):
         self._delegate = delegate
 
     anger = RWProp[int]("getAnger", "setAnger")
-    # TODO: property rolling_override getRollingOverride setRollingOverride
+    rolling_override = TransformedRWProp[Optional[bool]](
+        "getRollingOverride",
+        "setRollingOverride",
+        lambda x: UNWRAP_TRISTATE[x],
+        lambda x: WRAP_TRISTATE[x]
+    )
+
     has_nectar = RWProp[bool]("hasNectar", "setHasNectar")
     # TODO: property flower getFlower setFlower
     # TODO: property hive getHive setHive
@@ -174,7 +187,8 @@ class Goat(Animals):
     has_left_horn = RWProp[bool]("hasLeftHorn", "setLeftHorn")
     has_right_horn = RWProp[bool]("hasRightHorn", "setRightHorn")
     is_screaming = RWProp[bool]("isScreaming", "setScreaming")
-    # TODO: method public abstract void org.bukkit.entity.Goat.ram(org.bukkit.entity.LivingEntity)
+
+    def ram(self, target: LivingEntity): self._delegate.ram(target._delegate)
 
 class Ocelot(Animals):
     @binding_constructor("org.bukkit.entity.Ocelot")
@@ -362,9 +376,10 @@ class Llama(ChestedHorse, RangedEntity):
 
     _color_enum_mirror = EnumMirror(Color, "org.bukkit.entity.Llama$Color")
     color = TransformedRWProp[Color]("getColor", "setColor", _color_enum_mirror.from_native, _color_enum_mirror.to_native)
-    # TODO: property caravan_head getCaravanHead null
     strength = RWProp[int]("getStrength", "setStrength")
+
     def leave_caravan(self): self._delegate.leaveCaravan()
+    # TODO: property caravan_head getCaravanHead null
     # TODO: method public abstract org.bukkit.entity.Llama org.bukkit.entity.Llama.getCaravanTail()
     # TODO: method public abstract void org.bukkit.entity.Llama.joinCaravan(org.bukkit.entity.Llama)
     # TODO: method public abstract boolean org.bukkit.entity.Llama.inCaravan()

@@ -1,4 +1,4 @@
-from enum import Enum, auto
+from mechs.bindings.misc import ForwardingAudience, Keyed, Metadatable, PersistentDataHolder, PluginMessageRecipient
 from mechs._internal import *
 from mechs._internal.mirrors import *
 

@@ -1,12 +1,14 @@
 package com.floweytf.mechthon.engine;
 
 import com.floweytf.mechthon.MechthonPlugin;
+import com.floweytf.mechthon.persist.GlobalPersistentKeyMetadata;
 import com.floweytf.mechthon.util.Paths;
 import com.floweytf.mechthon.util.Util;
 import com.google.common.base.Preconditions;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -16,7 +18,9 @@ import org.bukkit.Bukkit;
 import org.graalvm.polyglot.PolyglotException;
 
 public class ScriptManager {
-    private static final String EXTENSION = ".py";
+    private interface Loader<T> {
+        T load(String name, Path path) throws IOException;
+    }
 
     private final MechthonPlugin plugin;
     private final Paths paths;
@@ -25,6 +29,7 @@ public class ScriptManager {
 
     private boolean isCurrentlyReloading = false;
     private Map<String, ScriptInstance> scripts;
+    private Map<String, GlobalPersistentKeyMetadata> globalPersistentKeys;
 
     ScriptManager(MechthonPlugin plugin, Paths paths, Bootstrap bootstrap, ScriptEngine engine, LoadHandler handler) {
         this.plugin = plugin;
@@ -33,44 +38,62 @@ public class ScriptManager {
         this.engine = engine;
 
         this.scripts = loadScripts(handler);
+        this.globalPersistentKeys = loadGlobalPersistentKeys(handler);
     }
 
-    private Map<String, ScriptInstance> loadScripts(LoadHandler loadHandler) {
-        final var scripts = new Object2ObjectOpenHashMap<String, ScriptInstance>();
+    private static <T> Map<String, T> load(
+        LoadHandler.LoadType type,
+        Path p,
+        LoadHandler loadHandler,
+        Loader<T> loader
+    ) {
+        final var results = new Object2ObjectOpenHashMap<String, T>();
 
-        try (final var stream = Files.walk(paths.scripts())) {
+        try (final var stream = Files.walk(p)) {
             final var loadTime = Util.profile(() -> stream.filter(Files::isRegularFile).forEach(path -> {
-                if (!path.getFileName().toString().endsWith(EXTENSION)) {
-                    loadHandler.warnIllegalExtension(path);
+                if (!path.getFileName().toString().endsWith("." + type.extension())) {
+                    loadHandler.warnIllegalExtension(type, path);
                     return;
                 }
 
-                final var relativeDir = paths.scripts().relativize(path).toString();
-                final var scriptName = relativeDir.substring(0, relativeDir.length() - EXTENSION.length());
+                final var relativeDir = p.relativize(path).toString();
+                final var name = relativeDir.substring(0, relativeDir.length() - type.extension().length() - 1);
 
-                if (!Key.parseableNamespace(scriptName)) {
-                    loadHandler.warnBadName(scriptName, path);
+                if (!Key.parseableNamespace(name)) {
+                    loadHandler.warnBadName(type, name, path);
                     return;
                 }
 
                 try {
-                    final var script = new ScriptInstance(scriptName);
-                    bootstrap.loadScript(script, Files.readString(path));
-                    script.freeze();
-                    scripts.put(scriptName, script);
+                    results.put(name, loader.load(name, path));
                 } catch (IOException e) {
-                    loadHandler.warnIOException(scriptName, path, e);
+                    loadHandler.warnIOException(type, name, path, e);
                 } catch (PolyglotException e) {
-                    loadHandler.warnPolyglotException(scriptName, path, e);
+                    loadHandler.warnPolyglotException(type, name, path, e);
                 }
             }));
 
-            loadHandler.perfLoad(scripts.size(), loadTime);
+            loadHandler.perfLoad(type, results.size(), loadTime);
         } catch (IOException e) {
-            loadHandler.warnException(e);
+            loadHandler.warnException(type, e);
         }
 
-        return scripts;
+        return results;
+    }
+
+    private Map<String, ScriptInstance> loadScripts(LoadHandler loadHandler) {
+        return load(LoadHandler.LoadType.SCRIPT, paths.scripts(), loadHandler, (name, path) -> {
+            final var script = new ScriptInstance(name);
+            bootstrap.loadScript(script, Files.readString(path));
+            script.freeze();
+            return script;
+        });
+    }
+
+    private Map<String, GlobalPersistentKeyMetadata> loadGlobalPersistentKeys(LoadHandler loadHandler) {
+        return load(LoadHandler.LoadType.GLOBAL_PERSISTENT_KEY, paths.scripts(), loadHandler, (name, path) -> {
+            throw new RuntimeException("TOOD");
+        });
     }
 
     public boolean reloadScripts(LoadHandler loadHandler, Runnable onComplete, Consumer<Throwable> onError) {
@@ -85,10 +108,12 @@ public class ScriptManager {
 
         CompletableFuture.runAsync(() -> {
             try {
-                Map<String, ScriptInstance> newScripts = loadScripts(loadHandler);
+                final var newScripts = loadScripts(loadHandler);
+                final var newGlobalPersistentKeys = loadGlobalPersistentKeys(loadHandler);
 
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     this.scripts = newScripts;
+                    this.globalPersistentKeys = newGlobalPersistentKeys;
                     isCurrentlyReloading = false;
                     onComplete.run();
                 });
@@ -103,7 +128,11 @@ public class ScriptManager {
         return true;
     }
 
-    public Map<String, ScriptInstance> getScripts() {
+    public Map<String, ScriptInstance> scripts() {
         return Collections.unmodifiableMap(scripts);
+    }
+
+    public Map<String, GlobalPersistentKeyMetadata> globalPersistentKeys() {
+        return Collections.unmodifiableMap(globalPersistentKeys);
     }
 }

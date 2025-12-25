@@ -18,8 +18,6 @@ class Boat(Vehicle):
         ON_LAND = auto()
         IN_AIR = auto()
 
-    _status_enum_mirror = EnumMirror(Status, "org.bukkit.entity.Boat$Status")
-    status = TransformedROProp[Status]("getStatus", _status_enum_mirror.from_native)
     class Type(Enum):
         OAK = auto()
         SPRUCE = auto()
@@ -31,9 +29,11 @@ class Boat(Vehicle):
         MANGROVE = auto()
         BAMBOO = auto()
 
+    _status_enum_mirror = EnumMirror(Status, "org.bukkit.entity.Boat$Status")
     _type_enum_mirror = EnumMirror(Type, "org.bukkit.entity.Boat$Type")
+
+    status = TransformedROProp[Status]("getStatus", _status_enum_mirror.from_native)
     boat_type = TransformedRWProp[Type]("getBoatType", "setBoatType", _type_enum_mirror.from_native, _type_enum_mirror.to_native)
-    # TODO: property boat_material getBoatMaterial null
 
 class ChestBoat(Boat, InventoryHolder, LootableEntityInventory):
     @binding_constructor("org.bukkit.entity.ChestBoat")

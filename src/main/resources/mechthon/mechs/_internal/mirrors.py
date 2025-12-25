@@ -60,7 +60,7 @@ class EnumMirror(Generic[E]):
     def from_native(self, native: BukkitType) -> E:
         return self._from_native[native]
 
-_uuid_type = java.type("java.util.UUID") # type:ignore
+_uuid_typez6z = java.type("java.util.UUID") # type:ignore
 
 def java_uuid_to_python(uuid: BukkitType):
     return UUID(int = (uuid.getMostSignificantBits() << 64) | uuid.getLeastSignificantBits())
@@ -68,7 +68,7 @@ def java_uuid_to_python(uuid: BukkitType):
 def python_uuid_to_java(uuid: UUID):
     return _uuid_type(uuid.bytes)
 
-UNWRAP_TRISTATE = {
+UNWRAP_TRISTATE: dict[BukkitType, None | bool] = {
     TriState.NOT_SET: None,
     TriState.FALSE: False,
     TriState.TRUE: True

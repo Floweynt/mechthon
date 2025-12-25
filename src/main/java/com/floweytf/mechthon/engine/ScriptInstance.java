@@ -2,16 +2,15 @@ package com.floweytf.mechthon.engine;
 
 import com.google.common.base.Preconditions;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import net.kyori.adventure.key.Key;
 import org.graalvm.polyglot.Value;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 
 public class ScriptInstance {
-    public record Ticker(Value callback, int delay) {
+    public record Ticker(String name, Value callback, int delay) {
     }
 
     private final String name;
@@ -19,14 +18,14 @@ public class ScriptInstance {
     @Nullable
     private Value main;
     private final Map<String, Value> triggerable = new Object2ObjectOpenHashMap<>(1);
-    private final List<Ticker> ticker = new ArrayList<>();
+    private final Map<String, Ticker> ticker = new Object2ObjectOpenHashMap<>(0);
     private boolean isFrozen;
 
     public ScriptInstance(String name) {
         this.name = name;
     }
 
-    public String getName() {
+    public String name() {
         return name;
     }
 
@@ -40,12 +39,16 @@ public class ScriptInstance {
         main = value;
     }
 
-    public void registerTicker(int delay, Value value) {
+    public void registerTicker(String name, int delay, Value value) {
+        Preconditions.checkArgument(name != null && Key.parseableNamespace(name) && !name.isEmpty());
         Preconditions.checkArgument(delay > 0);
         Preconditions.checkArgument(value != null && value.canExecute());
 
         Preconditions.checkState(!isFrozen, "already frozen");
-        ticker.add(new Ticker(value, delay));
+        Preconditions.checkArgument(
+            ticker.putIfAbsent(name, new Ticker(name, value, delay)) == null,
+            "can't register multiple tickers under the same name: '%s'", name
+        );
     }
 
     public void registerTriggerable(String name, Value value) {
@@ -53,8 +56,8 @@ public class ScriptInstance {
         Preconditions.checkArgument(value != null && value.canExecute());
 
         Preconditions.checkState(!isFrozen, "already frozen");
-        Preconditions.checkState(
-            triggerable.put(name, value) == null,
+        Preconditions.checkArgument(
+            triggerable.putIfAbsent(name, value) == null,
             "can't register multiple triggerables under the same name: '%s'", name
         );
     }
@@ -68,11 +71,13 @@ public class ScriptInstance {
         return main;
     }
 
-    public List<Ticker> getTicker() {
-        return Collections.unmodifiableList(ticker);
+    @UnmodifiableView
+    public Map<String, Ticker> getTickers() {
+        return Collections.unmodifiableMap(ticker);
     }
 
-    public Map<String, Value> getTriggerable() {
+    @UnmodifiableView
+    public Map<String, Value> triggerables() {
         return Collections.unmodifiableMap(triggerable);
     }
 }

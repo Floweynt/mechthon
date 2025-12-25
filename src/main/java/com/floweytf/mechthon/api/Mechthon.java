@@ -4,7 +4,7 @@ import com.floweytf.mechthon.MechthonApiImpl;
 import org.bukkit.plugin.Plugin;
 
 public interface Mechthon {
-    static Mechthon getInstance() {
+    static Mechthon instance() {
         return MechthonApiImpl.INSTANCE;
     }
 

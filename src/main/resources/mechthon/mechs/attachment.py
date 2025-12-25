@@ -3,8 +3,8 @@ from _mechthon_builtin import current_script_instance
 from mechs._internal.coro import run_possibly_async
 from mechs.bindings.entity import Entity
 
-def ticker(func: Callable[[Entity], Any | Coroutine[Any, Any, Any]], delay: int = 1):
-    current_script_instance().registerTicker(delay, lambda e: run_possibly_async(e, func))
+def ticker(func: Callable[[Entity], Any | Coroutine[Any, Any, Any]], name: str, delay: int = 1):
+    current_script_instance().registerTicker(name, delay, lambda e: run_possibly_async(e, func))
     return func
 
 def triggerable(func: Callable[[Entity], Any | Coroutine[Any, Any, Any]]):

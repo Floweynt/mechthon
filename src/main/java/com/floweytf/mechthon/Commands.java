@@ -16,7 +16,7 @@ public class Commands {
     private static StringArgument scriptArg(MechthonPlugin plugin) {
         final var arg = new StringArgument("script");
         arg.replaceSuggestions(ArgumentSuggestions.strings(c ->
-            plugin.getEngine().getScriptManager().getScripts().keySet().toArray(String[]::new))
+            plugin.engine().scriptManager().scripts().keySet().toArray(String[]::new))
         );
 
         return arg;
@@ -26,16 +26,16 @@ public class Commands {
         final var arg = new StringArgument("trigger");
 
         arg.replaceSuggestions(ArgumentSuggestions.strings(ctx -> {
-            final var script = plugin.getEngine()
-                .getScriptManager()
-                .getScripts()
+            final var script = plugin.engine()
+                .scriptManager()
+                .scripts()
                 .get(ctx.previousArgs().getByArgument(scriptArg));
 
             if (script == null) {
                 return new String[0];
             }
 
-            return script.getTriggerable().keySet().toArray(String[]::new);
+            return script.triggerables().keySet().toArray(String[]::new);
         }));
 
         return arg;
@@ -45,7 +45,7 @@ public class Commands {
         return new CommandAPICommand("reload").executes((sender, args) -> {
             plugin.getSLF4JLogger().info("reloading scripts...");
 
-            final var res = plugin.getEngine().getScriptManager().reloadScripts(
+            final var res = plugin.engine().scriptManager().reloadScripts(
                 LoadHandler.of(
                     LoadHandler.logging(plugin.getSLF4JLogger()),
                     LoadHandler.broadcasting(sender)
@@ -79,7 +79,7 @@ public class Commands {
         final var script = scriptArg(plugin);
 
         return new CommandAPICommand("invoke").withArguments(script).executes((sender, args) -> {
-            plugin.getEngine().invokeScript(
+            plugin.engine().invokeScript(
                 (Entity) sender,
                 args.getByArgument(script)
             );
@@ -91,7 +91,7 @@ public class Commands {
         final var triggerArg = triggerArg(scriptArg, plugin);
 
         return new CommandAPICommand("trigger").withArguments(scriptArg, triggerArg).executes((sender, args) -> {
-            plugin.getEngine().invokeTrigger(
+            plugin.engine().invokeTrigger(
                 (Entity) sender,
                 args.getByArgument(scriptArg),
                 args.getByArgument(triggerArg)

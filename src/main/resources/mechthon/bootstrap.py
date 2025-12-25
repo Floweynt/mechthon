@@ -24,7 +24,7 @@ def exec_sandboxed(source_code, filename):
 def load_script(script_instance, source_code: str):
     global __current_script_instance
     __current_script_instance = script_instance
-    exec_sandboxed(source_code, f"{script_instance.getName()}.py")
+    exec_sandboxed(source_code, f"{script_instance.name()}.py")
 
 def make_module_helper(package: str, name: str, is_package: bool):
     spec = importlib.util.spec_from_loader(name, loader=None, is_package=is_package)
@@ -35,8 +35,14 @@ def make_module_helper(package: str, name: str, is_package: bool):
     return module.__dict__
 
 def bootstrap():
+    def current_script_instance():
+        res = __current_script_instance
+        if res is None:
+            raise ValueError("current script instance is not set")
+        return res
+
     internal_mod = make_module_helper("_mechthon_builtin", "_mechthon_builtin", False)
-    internal_mod["current_script_instance"] = lambda: __current_script_instance
+    internal_mod["current_script_instance"] = current_script_instance 
     internal_mod["get_api"] = lambda: __api
 
 bootstrap()

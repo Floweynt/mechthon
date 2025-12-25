@@ -28,6 +28,7 @@ class Damageable(Entity):
 
     health = RWProp[float]("getHealth", "setHealth")
     absorption_amount = RWProp[float]("getAbsorptionAmount", "setAbsorptionAmount")
+
     # TODO: method public abstract void org.bukkit.entity.Damageable.damage(double)
     # TODO: method public abstract void org.bukkit.entity.Damageable.damage(double,org.bukkit.damage.DamageSource)
     # TODO: method public abstract void org.bukkit.entity.Damageable.damage(double,org.bukkit.entity.Entity)
@@ -37,7 +38,7 @@ class Shearable(Entity):
     def __init__(self, delegate: BukkitType):
         self._delegate = delegate
 
-    # TODO: method public abstract boolean io.papermc.paper.entity.Shearable.readyToBeSheared()
+    is_ready_to_shear = ROProp[bool]("readyToBeSheared")
     def shear(self): self._delegate.shear()
     # TODO: method public abstract void io.papermc.paper.entity.Shearable.shear(net.kyori.adventure.sound.Sound$Source)
 
@@ -52,7 +53,6 @@ class Vehicle(Entity):
     @binding_constructor("org.bukkit.entity.Vehicle")
     def __init__(self, delegate: BukkitType):
         self._delegate = delegate
-
 
 class Explosive(Entity):
     @binding_constructor("org.bukkit.entity.Explosive")

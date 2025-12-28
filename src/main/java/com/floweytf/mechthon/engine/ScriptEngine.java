@@ -16,10 +16,13 @@ public class ScriptEngine implements AutoCloseable {
     private final Bootstrap bootstrap;
     private final Bindings bindings;
     private final ScriptManager scriptManager;
+    private final MechthonPlugin plugin;
 
     private boolean closed;
 
     public ScriptEngine(MechthonPlugin plugin, Paths paths, LoadHandler events) {
+        this.plugin = plugin;
+
         context = Context.newBuilder("python")
             .allowAllAccess(true)
             .hostClassLoader(ScriptEngine.class.getClassLoader())
@@ -90,14 +93,5 @@ public class ScriptEngine implements AutoCloseable {
         final var trigger = script.triggerables().get(triggerName);
         Preconditions.checkArgument(trigger != null, "script '%s' does not have trigger '%s'", name, triggerName);
         return trigger.execute(bindings.createEntity(entity));
-    }
-
-    public Value invokeTicker(Entity entity, ScriptInstance.Ticker ticker) {
-        Preconditions.checkState(Bukkit.isPrimaryThread());
-        Preconditions.checkState(!isClosed());
-        Preconditions.checkArgument(entity != null);
-        Preconditions.checkArgument(ticker != null);
-
-        return ticker.callback().execute(bindings.createEntity(entity));
     }
 }

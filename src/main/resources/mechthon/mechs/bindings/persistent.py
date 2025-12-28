@@ -1,5 +1,5 @@
 from typing import Generic, Protocol, TypeVar
-from main.resources.mechthon._mechthon_builtin import current_script_instance, get_api
+from _mechthon_builtin import current_script_instance, get_api
 
 T = TypeVar('T')
 
@@ -27,5 +27,4 @@ class PersistentContainer(Protocol):
     def __setitem__(self, name: PersistentKey[T], value: T): ...
     def __contains__(self, name: PersistentKey[T]) -> bool: ...
 
-def global_data_container() -> PersistentKey:
-    
+def global_data_container() -> PersistentKey: ...

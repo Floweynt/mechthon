@@ -185,4 +185,3 @@ class Entity(Metadatable, CommandSender, Nameable, PersistentDataHolder, HoverEv
 
     def trigger(self, script: str, trigger: str) -> Any:
         return get_api().entityTrigger(self._delegate, script, trigger)
-

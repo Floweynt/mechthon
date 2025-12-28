@@ -8,9 +8,6 @@ class ScriptInstance(Protocol):
     def registerMain(self, cb: Callable[[Entity], Any]): ...
 
     @abstractmethod
-    def registerTicker(self, name: str, interval: int, cb: Callable[[Entity], Any]): ...
-
-    @abstractmethod
     def registerTriggerable(self, name: str, cb: Callable[[Entity], Any]): ...
 
 class GlobalPersistentKeyMetadata(Protocol):

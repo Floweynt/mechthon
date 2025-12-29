@@ -2,7 +2,7 @@ package com.floweytf.mechthon;
 
 import com.floweytf.mechthon.engine.LoadHandler;
 import com.floweytf.mechthon.engine.ScriptEngine;
-import com.floweytf.mechthon.entity.EntityManager;
+import com.floweytf.mechthon.state.entity.EntityManager;
 import com.floweytf.mechthon.util.Paths;
 import com.floweytf.mechthon.util.Util;
 import com.google.common.base.Preconditions;

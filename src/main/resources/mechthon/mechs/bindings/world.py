@@ -1,6 +1,8 @@
-from mechs.bindings.misc import ForwardingAudience, Keyed, Metadatable, PersistentDataHolder, PluginMessageRecipient
+from mechs.bindings.misc import ForwardingAudience, Keyed, Metadatable, PersistentDataHolder, PluginMessageRecipient, SoundCategory, _sound_category_enum_mirror
 from mechs._internal import *
 from mechs._internal.mirrors import *
+from mechs.bindings.entity import Entity;
+from mechs._internal.bukkit import Location;
 
 class WorldInfo(BukkitWrapper):
     @binding_constructor("org.bukkit.generator.WorldInfo")
@@ -136,19 +138,15 @@ class World(RegionAccessor, WorldInfo, PluginMessageRecipient, Metadatable, Pers
     # TODO: method public abstract boolean org.bukkit.World.setSpawnLocation(org.bukkit.Location)
     # TODO: method public abstract boolean org.bukkit.World.setSpawnLocation(int,int,int,float)
     # TODO: method public abstract boolean org.bukkit.World.setSpawnLocation(int,int,int)
-    # TODO: method public abstract void org.bukkit.World.playSound(org.bukkit.entity.Entity,java.lang.String,org.bukkit.SoundCategory,float,float,long)
-    # TODO: method public abstract void org.bukkit.World.playSound(org.bukkit.Location,java.lang.String,org.bukkit.SoundCategory,float,float,long)
-    # TODO: method public abstract void org.bukkit.World.playSound(org.bukkit.Location,org.bukkit.Sound,org.bukkit.SoundCategory,float,float)
-    # TODO: method public abstract void org.bukkit.World.playSound(org.bukkit.Location,org.bukkit.Sound,org.bukkit.SoundCategory,float,float,long)
-    # TODO: method public abstract void org.bukkit.World.playSound(org.bukkit.entity.Entity,org.bukkit.Sound,org.bukkit.SoundCategory,float,float,long)
-    # TODO: method public abstract void org.bukkit.World.playSound(org.bukkit.Location,java.lang.String,org.bukkit.SoundCategory,float,float)
-    # TODO: method public abstract void org.bukkit.World.playSound(org.bukkit.entity.Entity,java.lang.String,org.bukkit.SoundCategory,float,float)
-    # TODO: method public abstract void org.bukkit.World.playSound(org.bukkit.entity.Entity,org.bukkit.Sound,org.bukkit.SoundCategory,float,float)
-    # TODO: method public abstract void org.bukkit.World.playSound(org.bukkit.entity.Entity,org.bukkit.Sound,float,float)
-    # TODO: method public abstract void org.bukkit.World.playSound(org.bukkit.entity.Entity,java.lang.String,float,float)
-    # TODO: method public abstract void org.bukkit.World.playSound(org.bukkit.Location,java.lang.String,float,float)
+
+    def play_sound(self, pos: Entity | VecLike, sound: str, category: SoundCategory, volume: float, pitch: float):
+        if isinstance(pos, Entity):
+            self._delegate.playSound(pos._delegate, sound, _sound_category_enum_mirror.to_native(category), volume, pitch)
+        else:
+            (x, y, z) = pos
+            self._delegate.playSound(Location(self._delegate, x, y, z), sound, _sound_category_enum_mirror.to_native(category), volume, pitch)
+
     # TODO: method public abstract boolean org.bukkit.World.addPluginChunkTicket(int,int,org.bukkit.plugin.Plugin)
-    # TODO: method public abstract void org.bukkit.World.playSound(org.bukkit.Location,org.bukkit.Sound,float,float)
     def save(self): self._delegate.save()
     # TODO: method public default java.util.concurrent.CompletableFuture<org.bukkit.Chunk> org.bukkit.World.getChunkAtAsyncUrgently(org.bukkit.Location,boolean)
     # TODO: method public default java.util.concurrent.CompletableFuture<org.bukkit.Chunk> org.bukkit.World.getChunkAtAsyncUrgently(org.bukkit.Location)

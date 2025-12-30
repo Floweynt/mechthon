@@ -60,7 +60,7 @@ class EnumMirror(Generic[E]):
     def from_native(self, native: BukkitType) -> E:
         return self._from_native[native]
 
-_uuid_typez6z = java.type("java.util.UUID") # type:ignore
+_uuid_type = java.type("java.util.UUID") # type:ignore
 
 def java_uuid_to_python(uuid: BukkitType):
     return UUID(int = (uuid.getMostSignificantBits() << 64) | uuid.getLeastSignificantBits())

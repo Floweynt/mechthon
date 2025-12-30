@@ -6,6 +6,7 @@ from mechs._internal.mirrors import *
 import mechs._internal.bukkit as bukkit
 from mechs.scheduler import Scheduler
 from _mechthon_builtin import get_api
+from mechs.bindings.world import World;
 
 class _EntityScoresImpl:
     def __init__(self, delegate: BukkitType):
@@ -140,7 +141,7 @@ class Entity(Metadatable, CommandSender, Nameable, PersistentDataHolder, HoverEv
     # TODO: property bounding_box getBoundingBox null
     # TODO: property swim_sound getSwimSound null
     # TODO: property swim_high_speed_splash_sound getSwimHighSpeedSplashSound null
-    # TODO: property world getWorld null
+    world = TransformedROProp("getWorld", World)
     # TODO: property vehicle getVehicle null
     # TODO: property piston_move_reaction getPistonMoveReaction null
     # TODO: property pose getPose setPose

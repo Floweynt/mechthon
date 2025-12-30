@@ -1,3 +1,4 @@
+from enum import auto
 from mechs._internal.bukkit import MINI_MESSAGE_INST, PLAIN_TEXT_SERIALIZER_INST
 from mechs._internal import *
 from mechs._internal.mirrors import *
@@ -375,3 +376,16 @@ class CommandSender(Audience, Permissible):
     # TODO: method public abstract void org.bukkit.command.CommandSender.sendMessage(java.lang.String...)
     # TODO: method public default void org.bukkit.command.CommandSender.sendPlainMessage(java.lang.String)
 
+class SoundCategory(Enum):
+    MASTER = auto()
+    MUSIC = auto()
+    RECORDS = auto()
+    WEATHER = auto()
+    BLOCKS = auto()
+    HOSTILE = auto()
+    NEUTRAL = auto()
+    PLAYERS = auto()
+    AMBIENT = auto()
+    VOICE = auto()
+
+_sound_category_enum_mirror = EnumMirror(SoundCategory, "org.bukkit.SoundCategory")

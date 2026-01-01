@@ -91,7 +91,7 @@ public class ScriptManager {
     }
 
     private Map<String, GlobalPersistentKeyMetadata> loadGlobalPersistentKeys(LoadHandler loadHandler) {
-        return load(LoadHandler.LoadType.GLOBAL_PERSISTENT_KEY, paths.scripts(), loadHandler, (name, path) -> {
+        return load(LoadHandler.LoadType.GLOBAL_PERSISTENT_KEY, paths.globalKeys(), loadHandler, (name, path) -> {
             throw new RuntimeException("TOOD");
         });
     }

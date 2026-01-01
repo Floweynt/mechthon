@@ -1,15 +1,17 @@
+from __future__ import annotations
+
 from mechs.bindings.misc import ForwardingAudience, Keyed, Metadatable, PersistentDataHolder, PluginMessageRecipient, SoundCategory, _sound_category_enum_mirror
 from mechs._internal import *
 from mechs._internal.mirrors import *
-from mechs.bindings.entity import Entity;
-from mechs._internal.bukkit import Location;
+from mechs._internal.bukkit import Location
+import mechs.bindings.entity as entity
 
 class WorldInfo(BukkitWrapper):
     @binding_constructor("org.bukkit.generator.WorldInfo")
     def __init__(self, delegate: BukkitType):
         self._delegate = delegate
 
-    u_i_d = TransformedROProp[UUID]("getUID", java_uuid_to_python)
+    uid = TransformedROProp[UUID]("getUID", java_uuid_to_python)
     min_height = ROProp[int]("getMinHeight")
     seed = ROProp[int]("getSeed")
     # TODO: property environment getEnvironment null
@@ -138,9 +140,8 @@ class World(RegionAccessor, WorldInfo, PluginMessageRecipient, Metadatable, Pers
     # TODO: method public abstract boolean org.bukkit.World.setSpawnLocation(org.bukkit.Location)
     # TODO: method public abstract boolean org.bukkit.World.setSpawnLocation(int,int,int,float)
     # TODO: method public abstract boolean org.bukkit.World.setSpawnLocation(int,int,int)
-
-    def play_sound(self, pos: Entity | VecLike, sound: str, category: SoundCategory, volume: float, pitch: float):
-        if isinstance(pos, Entity):
+    def play_sound(self, pos: entity.Entity | VecLike, sound: str, category: SoundCategory, volume: float, pitch: float):
+        if isinstance(pos, entity.Entity):
             self._delegate.playSound(pos._delegate, sound, _sound_category_enum_mirror.to_native(category), volume, pitch)
         else:
             (x, y, z) = pos
